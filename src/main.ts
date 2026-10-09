@@ -16,8 +16,9 @@ const app = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
 const DEV = import.meta.env.DEV;
 
-// Until pairing exists (M2), the character comes from the URL: ?as=nora (default) or ?as=sam.
-const character: Character = params.get('as') === 'sam' ? 'sam' : 'nora';
+// Until pairing exists (M2), the player picks a character on the title card. `?as=sam` (dev) or
+// `#sam` (hosted page) preselects one.
+let character: Character = params.get('as') === 'sam' || location.hash === '#sam' ? 'sam' : 'nora';
 let timeline: Timeline = TIMELINE_OF[character];
 
 let settings = loadSettings();
@@ -79,6 +80,17 @@ let hasLocked = false;
 const paused = () => started && hasLocked && !input.locked;
 
 const pause = new PauseMenu(app, character, settings, updateSettings, () => input.requestLock());
+
+function chooseCharacter(next: Character): void {
+  if (next !== character) {
+    character = next;
+    timeline = TIMELINE_OF[character];
+    buildHouse();
+    const s = HOUSE.spawns[character];
+    player.spawn(s.pos, s.yaw);
+  }
+  pause.setCharacter(character);
+}
 input.onLockChange((locked) => {
   if (locked) hasLocked = true;
   pause.show(paused());
@@ -87,7 +99,8 @@ engine.renderer.domElement.addEventListener('click', () => {
   if (started && !input.locked) input.requestLock();
 });
 if (!started) {
-  showTitle(app, () => {
+  showTitle(app, (choice) => {
+    chooseCharacter(choice);
     started = true;
     input.requestLock();
   });

@@ -66,7 +66,6 @@ body {
   place-items: center;
   background: radial-gradient(ellipse at center, rgba(7, 4, 10, 0.55), rgba(7, 4, 10, 0.95) 70%);
   transition: opacity 2.4s ease;
-  cursor: pointer;
 }
 
 .title.gone {
@@ -96,10 +95,56 @@ body {
   opacity: 0.85;
 }
 
+.title-main {
+  display: grid;
+  justify-items: center;
+  gap: clamp(24px, 5vh, 48px);
+  padding-inline: 16px;
+}
+
+.title-choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+.title-choices button {
+  display: grid;
+  gap: 4px;
+  min-width: 9em;
+  padding: 14px 28px;
+  background: rgba(7, 4, 10, 0.5);
+  border: 1px solid rgba(217, 207, 184, 0.35);
+  color: var(--paper);
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
+}
+
+.title-choices button span {
+  font: 800 22px/1 var(--serif);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.title-choices button small {
+  font: 11px var(--mono);
+  letter-spacing: 0.3em;
+  color: rgba(217, 207, 184, 0.6);
+}
+
+.title-choices button:hover,
+.title-choices button:focus-visible {
+  border-color: var(--blood);
+  background: rgba(163, 20, 28, 0.15);
+  outline: none;
+}
+
 .title-hint {
-  position: absolute;
-  bottom: 12vh;
   margin: 0;
+  text-align: center;
   font: 12px var(--mono);
   letter-spacing: 0.4em;
   text-transform: uppercase;

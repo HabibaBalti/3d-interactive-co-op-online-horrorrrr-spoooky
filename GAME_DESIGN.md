@@ -38,8 +38,16 @@ The **Hale family house**: two storeys plus basement, small town. Two timelines 
 
 Family in 1994: **Ruth** (mother), **Walter** (father), **Nora** (17), **Sam** (9).
 
-**In-world voice link:** an old radio / baby monitor exists in both timelines. It is the fiction
-for the players' real voice call, and the channel the entity abuses.
+**In-world voice link:** a pair of **toy walkie-talkies**, little Sam's favourite toy. That night
+Nora and Sam each carried one for hide-and-seek. In the present, Sam finds his old handset in the
+house, and it crackles. It is the fiction for the players' real voice call, and the channel the
+entity abuses. _(Changed at M1 from "radio / baby monitor": a child's toy ties the voice link
+to the hide-and-seek game and to the night itself.)_
+
+**The hook (present).** Sam is in the house because his mother Ruth just died. The old answering
+machine in the kitchen still holds her last message to him, voiced, never shown as text: tired,
+apologetic, and it cuts off just as she starts to say "the basement". That is why he goes looking
+instead of just selling the place.
 
 ## 3. The truth (3:17 a.m.)
 
@@ -47,6 +55,11 @@ During the storm Nora and little Sam played hide-and-seek. Nora hid in the basem
 frightened by thunder, shut the basement door and slid the bolt, not knowing she was there. The
 basement flooded. The parents found Nora in the morning, hid what happened, told the town she ran
 away, and told Sam the same until he believed it.
+
+Two details that support the story without being stated. The grandfather clock stopped at 3:17
+because Walter stopped it the next morning and no one ever wound it again. Nora's walkie-talkie
+went down to the basement with her. In the climax, the child's voice behind the bolted door comes
+through the walkie as well as through the door.
 
 Not a twist: a **slow realization** players suspect before it is confirmed, and must keep going.
 Sam is uncovering something he did. Nora is uncovering her own death.
@@ -187,9 +200,15 @@ Stop for review after each milestone.
 
 ### Decisions log
 
-| When | Decision                                                                                      |
-| ---- | --------------------------------------------------------------------------------------------- |
-| M0   | Art direction (stylized low-poly + Japanese horror, two palettes) approved.                   |
-| M0   | Plain Three.js (no R3F); custom collision (no physics engine); Node + `ws` server.            |
-| M1   | Build **ground floor + basement first**; upstairs comes later (stair door is locked for now). |
-| M1   | A loop restarts the **current act**, with solved puzzles auto-completed.                      |
+| When | Decision                                                                                                                                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M0   | Art direction (stylized low-poly + Japanese horror, two palettes) approved.                                                                                                    |
+| M0   | Plain Three.js (no R3F); custom collision (no physics engine); Node + `ws` server.                                                                                             |
+| M1   | Build **ground floor + basement first**; upstairs comes later (stair door is locked for now).                                                                                  |
+| M1   | A loop restarts the **current act**, with solved puzzles auto-completed.                                                                                                       |
+| M1   | The user asked Claude to make these calls; the story details are open to change where it helps.                                                                                |
+| M1   | Floor plan as built: kitchen (answering machine, cookie jar), study (piano), hall (clock, photo wall, drawings), basement stairs at the north end of the hall.                 |
+| M1   | Basement door opens outward into the hall; plain slide bolt on the hall side, out of reach from the stairs.                                                                    |
+| M1   | No storm in the present: Sam's night is moonlit and silent. Only Nora has rain and lightning.                                                                                  |
+| M1   | Voice link fiction: toy walkie-talkies (replaces radio / baby monitor). Ruth's answering-machine message is the present-day hook.                                              |
+| M1   | The game is published as a playable page so it can be tried without installing anything. Two-player testing: two browser windows, or the shared page link once pairing exists. |

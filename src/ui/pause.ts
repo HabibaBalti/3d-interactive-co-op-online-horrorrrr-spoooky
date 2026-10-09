@@ -28,13 +28,10 @@ export class PauseMenu {
     this.el = document.createElement('div');
     this.el.className = 'pause';
     this.el.hidden = true;
-    const controls = CONTROLS.filter(([, what]) => what !== 'flashlight' || character === 'sam')
-      .map(([key, what]) => `<div><kbd>${key}</kbd><span>${what}</span></div>`)
-      .join('');
     this.el.innerHTML = `
       <div class="pause-panel">
         <h2>paused</h2>
-        <div class="controls">${controls}</div>
+        <div class="controls"></div>
         <form class="settings">
           <label>mouse <input name="mouseSensitivity" type="range" min="0.2" max="3" step="0.05"></label>
           <label>invert look <input name="invertY" type="checkbox"></label>
@@ -69,6 +66,16 @@ export class PauseMenu {
     });
     this.el.querySelector('.resume')!.addEventListener('click', onResume);
     this.sync();
+    this.setCharacter(character);
+  }
+
+  /** Only Sam has a flashlight, so only Sam's controls list it. */
+  setCharacter(character: Character): void {
+    this.el.querySelector('.controls')!.innerHTML = CONTROLS.filter(
+      ([, what]) => what !== 'flashlight' || character === 'sam',
+    )
+      .map(([key, what]) => `<div><kbd>${key}</kbd><span>${what}</span></div>`)
+      .join('');
   }
 
   private sync(): void {

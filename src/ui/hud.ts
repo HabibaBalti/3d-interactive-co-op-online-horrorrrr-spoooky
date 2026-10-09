@@ -1,3 +1,4 @@
+import type { Character } from '../../shared/types';
 import type { ProbeState } from '../net/ServerProbe';
 
 /** Centre dot that swells over something usable and shows its one-word prompt. */
@@ -66,18 +67,29 @@ export class DevHud {
   }
 }
 
-/** Title card. Calls `onStart` synchronously inside the click, so it can take pointer lock. */
-export function showTitle(parent: HTMLElement, onStart: () => void): void {
+/**
+ * Title card with the character choice. Calls `onStart` synchronously inside the click, so the
+ * game can take pointer lock.
+ */
+export function showTitle(parent: HTMLElement, onStart: (character: Character) => void): void {
   const el = document.createElement('div');
   el.className = 'title';
   el.innerHTML = `
     <div class="title-vertical" aria-hidden="true">まだ、ここにいる。</div>
-    <h1>STILL HERE</h1>
-    <p class="title-hint">click to enter</p>`;
+    <div class="title-main">
+      <h1>STILL HERE</h1>
+      <div class="title-choices">
+        <button type="button" data-character="nora"><span>Nora</span><small>1994</small></button>
+        <button type="button" data-character="sam"><span>Sam</span><small>today</small></button>
+      </div>
+      <p class="title-hint">headphones · WASD move · mouse look · E use · esc pause</p>
+    </div>`;
   parent.appendChild(el);
-  el.addEventListener('click', () => {
-    el.classList.add('gone');
-    window.setTimeout(() => el.remove(), 2500);
-    onStart();
+  el.querySelectorAll<HTMLButtonElement>('button[data-character]').forEach((button) => {
+    button.addEventListener('click', () => {
+      el.classList.add('gone');
+      window.setTimeout(() => el.remove(), 2500);
+      onStart(button.dataset.character as Character);
+    });
   });
 }

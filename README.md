@@ -6,6 +6,8 @@ family house. Get on a call. Never show each other your screen.
 
 > Design: [`GAME_DESIGN.md`](GAME_DESIGN.md) · Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 > · Status: **M1 (greybox house)**: walkable ground floor + basement in both timelines.
+> · **Play it in the browser:** https://claude.ai/artifact/VHXzRj8NB92Kg7DaPTdrXS (private until
+> shared from the page's Share menu).
 
 | Nora · 1994                                        | Sam · present                                       |
 | -------------------------------------------------- | --------------------------------------------------- |
