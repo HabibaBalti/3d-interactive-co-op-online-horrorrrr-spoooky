@@ -11,6 +11,12 @@ export interface Interactable {
 
 const CENTRE = new Vector2(0, 0);
 
+/** Visible itself and all the way up (a hidden group hides its children). */
+function shown(o: Object3D | null): boolean {
+  for (; o; o = o.parent) if (!o.visible) return false;
+  return true;
+}
+
 /**
  * Look-at interaction: a ray from the centre of the screen picks the nearest object within
  * reach. Walls and furniture are occluders, so you can't use things through them.
@@ -46,7 +52,7 @@ export class InteractionSystem {
     this.raycaster.far = this.reach;
     this.raycaster.setFromCamera(CENTRE, this.camera);
     const hits = this.raycaster.intersectObjects([...this.occluders, ...this.targets], true);
-    const first = hits.find((h) => h.object.visible);
+    const first = hits.find((h) => shown(h.object));
     this.setCurrent((first?.object.userData.interactable as Interactable | undefined) ?? null);
     return this.current?.prompt() ?? null;
   }

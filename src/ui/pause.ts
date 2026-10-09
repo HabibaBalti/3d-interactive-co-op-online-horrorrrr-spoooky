@@ -8,6 +8,7 @@ const CONTROLS: [string, string][] = [
   ['C', 'crouch'],
   ['E / click', 'use · look closer'],
   ['F', 'flashlight'],
+  ['Tab', 'switch sibling'],
   ['esc', 'pause'],
 ];
 
@@ -24,6 +25,7 @@ export class PauseMenu {
     private settings: Settings,
     onChange: (next: Partial<Settings>) => void,
     onResume: () => void,
+    onLeave: () => void,
   ) {
     this.el = document.createElement('div');
     this.el.className = 'pause';
@@ -47,8 +49,18 @@ export class PauseMenu {
           </label>
           <label>film effects <input name="postFx" type="checkbox"></label>
           <label>reduce flashing <input name="photosensitive" type="checkbox"></label>
+          <label>subtitles <input name="subtitles" type="checkbox"></label>
+          <label>jump scares
+            <select name="scares">
+              <option value="full">full</option>
+              <option value="reduced">reduced</option>
+            </select>
+          </label>
         </form>
-        <button type="button" class="resume">return</button>
+        <div class="pause-actions">
+          <button type="button" class="resume">return</button>
+          <button type="button" class="leave">leave the house</button>
+        </div>
       </div>`;
     parent.appendChild(this.el);
 
@@ -64,19 +76,26 @@ export class PauseMenu {
         quality: data.get('quality') as Quality,
         postFx: data.has('postFx'),
         photosensitive: data.has('photosensitive'),
+        subtitles: data.has('subtitles'),
+        scares: data.get('scares') as Settings['scares'],
       };
       this.settings = { ...this.settings, ...next };
       onChange(next);
     });
     this.el.querySelector('.resume')!.addEventListener('click', onResume);
+    this.el.querySelector('.leave')!.addEventListener('click', onLeave);
     this.sync();
     this.setCharacter(character);
   }
 
+  /** Practice alone shows the Tab key. */
+  solo = false;
+
   /** Only Sam has a flashlight, so only Sam's controls list it. */
   setCharacter(character: Character): void {
     this.el.querySelector('.controls')!.innerHTML = CONTROLS.filter(
-      ([, what]) => what !== 'flashlight' || character === 'sam',
+      ([, what]) =>
+        (what !== 'flashlight' || character === 'sam') && (what !== 'switch sibling' || this.solo),
     )
       .map(([key, what]) => `<div><kbd>${key}</kbd><span>${what}</span></div>`)
       .join('');
@@ -93,6 +112,8 @@ export class PauseMenu {
     (form.elements.namedItem('quality') as HTMLSelectElement).value = this.settings.quality;
     field('postFx').checked = this.settings.postFx;
     field('photosensitive').checked = this.settings.photosensitive;
+    field('subtitles').checked = this.settings.subtitles;
+    (form.elements.namedItem('scares') as HTMLSelectElement).value = this.settings.scares;
   }
 
   show(visible: boolean): void {

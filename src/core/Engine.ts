@@ -52,9 +52,10 @@ export class Engine {
     this.resize();
   }
 
-  applyPalette(p: TimelinePalette): void {
+  /** `loop` thickens the fog: the house gets worse every time the night repeats. */
+  applyPalette(p: TimelinePalette, loop = 0): void {
     this.scene.background = p.background;
-    this.scene.fog = new FogExp2(p.fog, p.fogDensity);
+    this.scene.fog = new FogExp2(p.fog, p.fogDensity * (1 + Math.min(loop, 5) * 0.15));
     this.post.applyPalette(p);
   }
 

@@ -10,7 +10,7 @@ const ORBIT = 0.35;
 const ease = (t: number) => t * t * (3 - 2 * t);
 
 export interface InspectView {
-  show(target: InspectTarget): void;
+  show(target: InspectTarget, panel?: HTMLElement): void;
   hide(): void;
 }
 
@@ -58,8 +58,19 @@ export class Inspector {
     return ease(this.t);
   }
 
-  show(target: InspectTarget): void {
+  /** The open close-up has controls: the mouse is free while it's up. */
+  get hasPanel(): boolean {
+    return this.panel !== null;
+  }
+
+  private panel: HTMLElement | null = null;
+  /** Called when a close-up with controls closes (to take the mouse back). */
+  onPanelClosed: (() => void) | null = null;
+
+  show(target: InspectTarget, panel?: HTMLElement): void {
     this.target = target;
+    this.panel = panel ?? null;
+    if (panel && document.pointerLockElement) document.exitPointerLock();
     this.dir = 1;
     this.orbitX = this.orbitY = 0;
     this.input.consumeMouse();
@@ -72,7 +83,7 @@ export class Inspector {
       target.def.distance ??
       Math.min(2.5, Math.max(0.5, Math.max(size.x, size.y, size.z) * 1.2 + 0.25));
     this.framing(dist);
-    this.view.show(target);
+    this.view.show(target, panel);
 
     const sound = target.text.sound;
     if (sound) events.emit('inspect', { id: target.id, sound, ...this.centre });
@@ -106,6 +117,10 @@ export class Inspector {
     if (!this.target || this.dir === -1) return;
     this.dir = -1;
     this.view.hide();
+    if (this.panel) {
+      this.panel = null;
+      this.onPanelClosed?.();
+    }
   }
 
   /**

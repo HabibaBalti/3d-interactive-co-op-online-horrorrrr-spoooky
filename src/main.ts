@@ -1,34 +1,31 @@
 import './style.css';
 import { AudioEngine } from './audio/AudioEngine';
-import { Soundscape } from './audio/Soundscape';
 import { Engine } from './core/Engine';
 import { Input } from './core/Input';
+import { Game } from './game/Game';
 import { InteractionSystem } from './interaction/InteractionSystem';
-import { Inspector } from './interaction/Inspector';
+import { clearSession, loadSession, saveSession, type Link } from './net/Link';
+import { RoomLink, roomApi } from './net/RoomLink';
+import { ServerLink } from './net/ServerLink';
 import { ServerProbe } from './net/ServerProbe';
-import { Flashlight } from './player/Flashlight';
-import { PlayerController } from './player/PlayerController';
-import { loadSettings, QUALITY_PRESETS, saveSettings, type Settings } from './settings/settings';
-import { DevHud, Reticle, showTitle } from './ui/hud';
-import { InspectCard } from './ui/inspect';
+import { SoloLink } from './net/SoloLink';
+import { loadSettings, saveSettings, type Settings } from './settings/settings';
+import { DevHud, Reticle } from './ui/hud';
+import { Lobby, type LobbyChoice, type Together } from './ui/lobby';
 import { PauseMenu } from './ui/pause';
 import { House } from './world/house/House';
 import { HOUSE } from './world/house/layout';
-import { TIMELINE_OF, type Character, type Timeline } from '../shared/types';
+import type { GameState } from '../shared/game/types';
+import { generateRoomCode } from '../shared/roomCode';
+import { otherCharacter, type Character } from '../shared/types';
 
 const app = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
 const DEV = import.meta.env.DEV;
 
-// Until pairing exists (M2), the player picks a character on the title card. `?as=sam` (dev) or
-// `#sam` (hosted page) preselects one.
-let character: Character = params.get('as') === 'sam' || location.hash === '#sam' ? 'sam' : 'nora';
-let timeline: Timeline = TIMELINE_OF[character];
-
 let settings = loadSettings();
 const engine = new Engine(app, settings);
 const input = new Input(engine.renderer.domElement);
-const interaction = new InteractionSystem(engine.camera);
 const reticle = new Reticle(app);
 const devHud = DEV ? new DevHud(app) : null;
 
@@ -40,150 +37,243 @@ try {
 } catch {
   audio = null;
 }
-let soundscape: Soundscape | null = null;
 
-let house!: House;
-let flashlight: Flashlight | null = null;
-const player = new PlayerController(engine.camera, input, null!, () => settings);
-const inspector = new Inspector(engine.camera, input, new InspectCard(app, () => settings.lore));
+let game: Game | null = null;
 
-function buildHouse(): void {
-  if (house) {
-    engine.scene.remove(house.root);
-    house.dispose();
-  }
-  interaction.clear();
-  house = new House(timeline, HOUSE, interaction, {
-    shadows: QUALITY_PRESETS[settings.quality].shadows,
-    photosensitive: () => settings.photosensitive,
-    onInspect: (target) => inspector.show(target),
-  });
-  engine.scene.add(house.root);
-  engine.applyPalette(house.palette);
-  interaction.setOccluders(house.occluders);
-  player.setCollision(house.collision);
+// --- The title's backdrop: Nora's hallway, slowly breathing ---------------------------------
+let preview: House | null = new House('1994', HOUSE, new InteractionSystem(engine.camera), {
+  shadows: false,
+  photosensitive: () => settings.photosensitive,
+});
+engine.scene.add(preview.root);
+engine.applyPalette(preview.palette);
 
-  soundscape?.dispose();
-  if (audio) {
-    audio.setTimeline(timeline);
-    soundscape = new Soundscape(audio, timeline, HOUSE);
-  }
-
-  // Only Sam, in the dark present, carries a flashlight.
-  flashlight?.dispose();
-  flashlight = timeline === 'present' ? new Flashlight(engine.camera) : null;
-  flashlight?.setShadows(QUALITY_PRESETS[settings.quality].shadows);
+function dropPreview(): void {
+  if (!preview) return;
+  engine.scene.remove(preview.root);
+  preview.dispose();
+  preview = null;
 }
 
-buildHouse();
-const spawn = HOUSE.spawns[character];
-player.spawn(spawn.pos, spawn.yaw);
-if (params.has('pos')) {
-  const [x = 0, y = 0, z = 0] = params.get('pos')!.split(',').map(Number);
-  player.spawn([x, y, z], Number(params.get('yaw') ?? 0));
-  player.pitch = (Number(params.get('pitch') ?? 0) * Math.PI) / 180;
-}
-
+// --- Settings and pausing -------------------------------------------------------------------
 function updateSettings(next: Partial<Settings>): void {
-  const shadowsBefore = QUALITY_PRESETS[settings.quality].shadows;
+  const prev = settings;
   settings = { ...settings, ...next };
   saveSettings(settings);
   engine.applySettings(settings);
   audio?.setVolume(settings.volume);
-  const shadows = QUALITY_PRESETS[settings.quality].shadows;
-  if (shadows !== shadowsBefore) {
-    house.setShadows(shadows);
-    flashlight?.setShadows(shadows);
-  }
+  game?.applySettings(prev, settings);
 }
 
-// --- Flow: title → pointer lock → play; releasing the pointer pauses -----------------------
-let started = params.has('notitle');
+let started = false;
 let hasLocked = false;
-const paused = () => started && hasLocked && !input.locked;
+const paused = () => started && hasLocked && !input.locked && !game?.inspector.hasPanel;
 
-const pause = new PauseMenu(app, character, settings, updateSettings, () => input.requestLock());
-
-function chooseCharacter(next: Character): void {
-  if (next !== character) {
-    character = next;
-    timeline = TIMELINE_OF[character];
-    buildHouse();
-    const s = HOUSE.spawns[character];
-    player.spawn(s.pos, s.yaw);
-  }
-  pause.setCharacter(character);
-}
+const pause = new PauseMenu(
+  app,
+  'nora',
+  settings,
+  updateSettings,
+  () => input.requestLock(),
+  () => {
+    clearSession();
+    location.reload();
+  },
+);
 input.onLockChange((locked) => {
   if (locked) hasLocked = true;
-  else inspector.close();
+  else if (!game?.inspector.hasPanel) game?.closeCloseUp();
   pause.show(paused());
 });
-// Browsers only allow sound after the player interacts with the page.
 window.addEventListener('pointerdown', () => audio?.resume());
 window.addEventListener('keydown', () => started && audio?.resume());
 document.addEventListener('visibilitychange', () =>
   document.hidden ? audio?.suspend() : started && audio?.resume(),
 );
 engine.renderer.domElement.addEventListener('click', () => {
-  if (started && !input.locked) input.requestLock();
+  if (started && !input.locked && !game?.inspector.hasPanel) input.requestLock();
 });
-if (!started) {
-  showTitle(app, (choice) => {
-    chooseCharacter(choice);
-    audio?.resume();
-    started = true;
-    input.requestLock();
-  });
-}
 
 // --- Actions ----------------------------------------------------------------------------------
 const active = () => started && !paused();
-// E or click uses what you're looking at, or steps back out of a close-up.
-const use = () => {
-  if (!active()) return;
-  if (inspector.busy) inspector.close();
-  else interaction.use();
-};
+const use = () => active() && game?.use();
 input.onKey('KeyE', use);
-input.onKey('Space', () => inspector.busy && inspector.close());
 input.onClick(use);
-input.onKey('KeyF', () => active() && flashlight?.toggle());
-if (DEV) {
-  // Dev only: look at the other timeline from the same spot.
-  input.onKey('KeyT', () => {
-    timeline = timeline === '1994' ? 'present' : '1994';
-    buildHouse();
-  });
-}
+input.onKey('Escape', () => game?.inspector.hasPanel && game.closeCloseUp());
+input.onKey('Space', () => game?.inspector.busy && game.closeCloseUp());
+input.onKey('KeyF', () => active() && game?.toggleFlashlight());
+// Practice alone: Tab becomes the other sibling.
+input.onKey('Tab', () => {
+  if (!game || game.link.kind !== 'solo' || !active()) return;
+  game.setCharacter(otherCharacter(game.character));
+  pause.setCharacter(game.character);
+});
 
 // --- Frame loop -------------------------------------------------------------------------------
 engine.onUpdate((dt, time) => {
+  if (!game) {
+    // Title: a slow drift down Nora's hallway.
+    preview?.update(dt, time, 0);
+    engine.flash = preview?.flash ?? 0;
+    engine.camera.position.set(
+      -0.5 + Math.sin(time * 0.2) * 0.1,
+      1.6,
+      4.6 - Math.sin(time * 0.05) * 1.5,
+    );
+    engine.camera.rotation.set(-0.02, Math.sin(time * 0.1) * 0.08, 0, 'YXZ');
+    audio?.update(0.1, true);
+    return;
+  }
   const on = active();
-  const looking = inspector.busy;
-  player.update(dt, on && !looking);
-  inspector.update(dt);
-  engine.post.atmosphere.uniforms.uVignette!.value = 1 + inspector.amount * 0.12;
-  house.update(dt, time, player.feet.y);
+  const prompt = game.update(dt, time, on);
   audio?.update(engine.camera.position.y - 1.5, paused() || !started);
-  soundscape?.update();
-  flashlight?.update(dt, player.yaw, player.pitch, inspector.amount);
-  engine.flash = house.flash;
-  reticle.show(on && !looking);
-  if (looking) interaction.release();
-  reticle.setPrompt(on && !looking ? interaction.update() : null);
-  const f = player.feet;
-  devHud?.update(dt, [
-    `${character} · ${timeline}${DEV ? ' · <kbd>T</kbd> swap' : ''}`,
-    `${player.room ?? '—'} · ${f.x.toFixed(1)}, ${f.y.toFixed(1)}, ${f.z.toFixed(1)}`,
-  ]);
+  engine.flash = game.flash;
+  reticle.show(on && !game.lookingClosely && !game.frozen);
+  reticle.setPrompt(prompt);
+  if (devHud) {
+    const f = game.player.feet;
+    devHud.update(dt, [
+      `${game.character} · ${game.timeline} · act ${game.state.act} · loop ${game.state.loop}`,
+      `${game.room ?? '—'} · ${f.x.toFixed(1)}, ${f.y.toFixed(1)}, ${f.z.toFixed(1)}`,
+    ]);
+  }
 });
 engine.start();
 
-if (devHud) {
-  new ServerProbe((s) => devHud.setServer(s)).connect();
-  // Console/automation handle for debugging (dev builds only).
-  Object.assign(window, {
-    __still: { engine, player, interaction, inspector, house: () => house },
-  });
+// --- Getting into a game ---------------------------------------------------------------------
+async function together(): Promise<{ kind: Together; room: Awaited<ReturnType<typeof roomApi>> }> {
+  const room = await roomApi();
+  if (room) return { kind: 'room', room };
+  // Self-hosted or `npm run dev`: is there a game server on this origin?
+  try {
+    const ctl = new AbortController();
+    const t = window.setTimeout(() => ctl.abort(), 2500);
+    const res = await fetch('./health', { signal: ctl.signal });
+    window.clearTimeout(t);
+    if (res.ok) return { kind: 'server', room: null };
+  } catch {
+    // no server
+  }
+  return { kind: null, room: null };
 }
+
+function linkFor(choice: LobbyChoice, net: Awaited<ReturnType<typeof together>>): Link {
+  if (choice.mode === 'solo') {
+    saveSession({
+      kind: 'solo',
+      code: 'SOLO',
+      character: choice.character,
+      token: '',
+      savedAt: Date.now(),
+    });
+    return new SoloLink(choice.character, true);
+  }
+  if (choice.mode === 'continue') {
+    const s = choice.session;
+    if (s.kind === 'solo') return new SoloLink(s.character);
+    if (s.kind === 'room' && net.room) {
+      return new RoomLink(net.room, s.code, s.token === 'host' ? 'host' : 'guest', s.character);
+    }
+    return new ServerLink({ rejoin: { code: s.code, token: s.token } });
+  }
+  if (net.kind === 'room' && net.room) {
+    return choice.mode === 'create'
+      ? new RoomLink(net.room, generateRoomCode(), 'host', choice.character)
+      : new RoomLink(net.room, choice.code, 'guest', 'nora');
+  }
+  return new ServerLink(
+    choice.mode === 'create' ? { create: choice.character } : { join: choice.code },
+  );
+}
+
+function firstState(link: Link): Promise<GameState> {
+  return new Promise((resolve) => link.onState((s) => resolve(s)));
+}
+
+function enter(): void {
+  started = true;
+  audio?.resume();
+  input.requestLock();
+}
+
+function begin(link: Link, state: GameState): void {
+  dropPreview();
+  game = new Game(app, engine, input, audio, () => settings, link);
+  game.start(state);
+  pause.solo = link.kind === 'solo';
+  pause.setCharacter(link.character);
+  if (DEV) {
+    Object.assign(window, {
+      __still: {
+        engine,
+        game,
+        /** Act as either character (solo practice): __still.as('sam', {type: ...}) */
+        as: (c: Character, a: Parameters<Link['act']>[0]) => {
+          const prev = link.character;
+          link.character = c;
+          link.act(a);
+          link.character = prev;
+        },
+      },
+    });
+  }
+}
+
+async function boot(): Promise<void> {
+  if (params.has('notitle')) {
+    // Dev shortcut: straight into solo practice.
+    const link = new SoloLink(params.get('as') === 'sam' ? 'sam' : 'nora', !params.has('keep'));
+    begin(link, await firstState(link));
+    if (params.has('pos')) {
+      const [x = 0, y = 0, z = 0] = params.get('pos')!.split(',').map(Number);
+      game!.player.spawn([x, y, z], Number(params.get('yaw') ?? 0));
+      game!.player.pitch = (Number(params.get('pitch') ?? 0) * Math.PI) / 180;
+    }
+    started = true;
+    return;
+  }
+
+  const net = await together();
+  const lobby = new Lobby(app, net.kind, loadSession());
+  let message = '';
+  for (;;) {
+    const choice = await lobby.choose(message);
+    const link = linkFor(choice, net);
+    const failure = await new Promise<string | null>((resolve) => {
+      if (link.kind === 'solo') {
+        void firstState(link).then((s) => {
+          begin(link, s);
+          lobby.close();
+          enter();
+          resolve(null);
+        });
+        return;
+      }
+      let built = false;
+      lobby.waiting(
+        link,
+        () => {
+          if (!game) return;
+          lobby.close();
+          enter();
+          resolve(null);
+        },
+        (msg) => {
+          link.close();
+          if (!built) clearSession();
+          resolve(msg);
+        },
+      );
+      void firstState(link).then((s) => {
+        built = true;
+        if (!game) begin(link, s);
+      });
+    });
+    if (!failure) return;
+    message = failure;
+  }
+}
+
+void boot();
+
+if (devHud) new ServerProbe((s) => devHud.setServer(s)).connect();

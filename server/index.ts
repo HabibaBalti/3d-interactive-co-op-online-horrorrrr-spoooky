@@ -9,11 +9,14 @@ import {
   type ClientMessage,
   type ServerMessage,
 } from '../shared/protocol';
+import { normalizeRoomCode } from '../shared/roomCode';
+import type { Character } from '../shared/types';
+import { Rooms, type Room } from './rooms';
 
 /**
- * Realtime server. In M0 it only answers health checks and ping; M2 adds rooms and the
- * authoritative story-flag state. In production it also serves the built client from dist/,
- * so the whole game deploys as one service.
+ * Realtime server: game rooms with the authoritative rules (shared/game), plus health checks.
+ * In production it also serves the built client from dist/, so the whole game deploys as one
+ * service.
  */
 const PORT = Number(process.env.PORT ?? 8787);
 const DIST = resolve(import.meta.dirname, '../dist');
@@ -67,12 +70,24 @@ const http = createServer((req, res) => {
 });
 
 const wss = new WebSocketServer({ server: http, path: '/ws', maxPayload: 64 * 1024 });
+const rooms = new Rooms();
+setInterval(() => rooms.sweep(), 10 * 60 * 1000).unref();
 
 function send(ws: WebSocket, msg: ServerMessage): void {
   if (ws.readyState === ws.OPEN) ws.send(encode(msg));
 }
 
 wss.on('connection', (ws) => {
+  let room: Room | null = null;
+  let me: Character | null = null;
+
+  const seat = (r: Room, c: Character, token: string) => {
+    room = r;
+    me = c;
+    send(ws, { t: 'joined', code: r.code, character: c, token });
+    r.connect(c, (msg) => send(ws, msg));
+  };
+
   ws.on('message', (data) => {
     const msg = decode<ClientMessage>(data.toString());
     if (!msg) return send(ws, { t: 'error', reason: 'malformed' });
@@ -84,7 +99,38 @@ wss.on('connection', (ws) => {
         return send(ws, { t: 'welcome', protocol: PROTOCOL_VERSION, serverTime: Date.now() });
       case 'ping':
         return send(ws, { t: 'pong', at: msg.at });
+      case 'create': {
+        if (room) return;
+        const r = rooms.create();
+        const c = msg.character === 'sam' ? 'sam' : 'nora';
+        return seat(r, c, r.sit(c)!);
+      }
+      case 'join': {
+        if (room) return;
+        const r = rooms.get(normalizeRoomCode(String(msg.code)));
+        if (!r) return send(ws, { t: 'error', reason: 'no-such-game' });
+        const c = r.freeSeat();
+        if (!c) return send(ws, { t: 'error', reason: 'game-full' });
+        return seat(r, c, r.sit(c)!);
+      }
+      case 'rejoin': {
+        if (room) return;
+        const r = rooms.get(normalizeRoomCode(String(msg.code)));
+        const c = r?.byToken(String(msg.token));
+        if (!r || !c) return send(ws, { t: 'error', reason: 'no-such-game' });
+        return seat(r, c, String(msg.token));
+      }
+      case 'action':
+        if (room && me) room.act(me, msg.action);
+        return;
+      case 'presence':
+        if (room && me) room.relayPresence(me, msg.presence);
+        return;
     }
+  });
+
+  ws.on('close', () => {
+    if (room && me) room.disconnect(me);
   });
 });
 

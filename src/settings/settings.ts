@@ -13,6 +13,10 @@ export interface Settings {
   volume: number;
   /** Show the faint line of lore under close-ups. */
   lore: boolean;
+  /** Show subtitles for voiced lines. */
+  subtitles: boolean;
+  /** Jump scare intensity. */
+  scares: 'full' | 'reduced';
 }
 
 export interface QualityPreset {
@@ -41,6 +45,8 @@ export const DEFAULT_SETTINGS: Settings = {
   headBob: true,
   volume: 0.8,
   lore: true,
+  subtitles: false,
+  scares: 'full',
 };
 
 export function loadSettings(): Settings {

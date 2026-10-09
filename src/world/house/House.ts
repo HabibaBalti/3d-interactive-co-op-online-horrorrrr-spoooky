@@ -45,6 +45,8 @@ export interface HouseOptions {
   photosensitive: () => boolean;
   /** The player chose to look closely at something. */
   onInspect?: (target: InspectTarget) => void;
+  /** How many times the night has looped: each loop, fewer lamps work. */
+  loop?: number;
 }
 
 /** Something the player can lean in and look at. */
@@ -58,6 +60,18 @@ export interface InspectTarget {
 }
 
 const GLOW = new Color('#e8d9b0');
+
+/** Handle to something the player can look at closely. */
+export interface Lookable {
+  readonly target: InspectTarget;
+  /** Replace what "use" does (null restores the close-up). */
+  override(use: { prompt: () => string | null; interact: () => void } | null): void;
+  /** Open the close-up now. */
+  look(): void;
+  remove(): void;
+  /** Disabled lookables can't be aimed at. */
+  setEnabled(on: boolean): void;
+}
 
 /** Below this feet height the player is in the basement. */
 const BASEMENT_LEVEL = -1.5;
@@ -98,6 +112,7 @@ export class House {
   private readonly storm: Storm | null;
   private clock?: GrandfatherClock;
   private readonly rand: () => number;
+  private readonly lookables = new Map<string, Lookable>();
   private readonly inspectables: {
     mats: MeshToonMaterial[];
     hovered: boolean;
@@ -140,8 +155,16 @@ export class House {
     this.moon.shadow.bias = -0.0015;
     this.root.add(this.ambient, this.moon, this.moon.target);
 
-    for (const spec of layout.lights) {
-      if (spec.timeline !== timeline) continue;
+    // Each loop, another lamp dies (the hall lamp and the basement bulb hold out longest).
+    const dead = new Set(
+      layout.lights
+        .map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.timeline === timeline && !l.castShadow && !l.flicker)
+        .slice(0, options.loop ?? 0)
+        .map(({ i }) => i),
+    );
+    for (const [i, spec] of layout.lights.entries()) {
+      if (spec.timeline !== timeline || dead.has(i)) continue;
       const light = new PointLight(spec.color, spec.intensity, spec.distance, 1.5);
       light.position.set(...spec.pos);
       light.shadow.bias = -0.004;
@@ -369,6 +392,19 @@ export class House {
     const def = prop.id ? INSPECTABLES[prop.id] : undefined;
     const text = def?.text[this.timeline];
     if (!def || !text) return;
+    const front = new Vector3(0, 0, 1).applyAxisAngle(
+      new Vector3(0, 1, 0),
+      ((place.rotY ?? 0) * Math.PI) / 180,
+    );
+    this.addLookable({ id: prop.id!, object, def, text, front });
+  }
+
+  /**
+   * Makes an object glow when looked at and open a close-up when used. Puzzles use the returned
+   * handle to change what "use" does (take, wind, pry...) or to swap its text.
+   */
+  addLookable(target: InspectTarget): Lookable {
+    const { object } = target;
     const mats: MeshToonMaterial[] = [];
     object.traverse((o) => {
       const m = (o as Mesh).material;
@@ -380,6 +416,7 @@ export class House {
       }
     });
     // An invisible, slightly larger target so small things are easy to aim at.
+    object.updateWorldMatrix(true, true);
     const bounds = new Box3().setFromObject(object);
     const size = bounds.getSize(new Vector3());
     const pad = (v: number) => Math.max(v + 0.08, 0.22);
@@ -391,18 +428,34 @@ export class House {
     this.root.add(proxy);
     const entry = { mats, hovered: false, glow: 0 };
     this.inspectables.push(entry);
-    const front = new Vector3(0, 0, 1).applyAxisAngle(
-      new Vector3(0, 1, 0),
-      ((place.rotY ?? 0) * Math.PI) / 180,
-    );
-    const inspect: InspectTarget = { id: prop.id!, object, def, text, front };
+    let use: { prompt: () => string | null; interact: () => void } | null = null;
     const interactable = {
-      prompt: () => 'look',
-      interact: () => this.options.onInspect?.(inspect),
+      prompt: () => (use ? use.prompt() : object.visible ? 'look' : null),
+      interact: () => (use ? use.interact() : this.options.onInspect?.(target)),
       hover: (on: boolean) => (entry.hovered = on),
     };
     this.interaction.register(proxy, interactable);
     this.interaction.register(object, interactable);
+    const handle: Lookable = {
+      target,
+      override: (next) => (use = next),
+      look: () => this.options.onInspect?.(target),
+      remove: () => {
+        proxy.removeFromParent();
+        object.removeFromParent();
+        entry.mats.length = 0;
+      },
+      setEnabled: (on) => {
+        proxy.visible = on;
+        proxy.scale.setScalar(on ? 1 : 0.0001);
+      },
+    };
+    this.lookables.set(target.id, handle);
+    return handle;
+  }
+
+  lookable(id: string): Lookable | undefined {
+    return this.lookables.get(id);
   }
 
   private collideWorldBox(b: Box3): void {

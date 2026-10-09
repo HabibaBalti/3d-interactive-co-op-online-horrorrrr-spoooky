@@ -1,15 +1,34 @@
-/**
- * Wire protocol between client and the realtime server.
- * M0 only carries a handshake and ping; rooms, flags and lock-ins arrive in M2.
- * Every message is a JSON object with a `t` (type) discriminator.
- */
-export const PROTOCOL_VERSION = 1;
+import type { Action, Fx, GameState } from './game/types';
+import type { Character } from './types';
 
-export type ClientMessage = { t: 'hello'; protocol: number } | { t: 'ping'; at: number };
+/**
+ * Wire protocol between a client and an authority (the Node server, or the game creator's page
+ * when hosted). Every message is a JSON object with a `t` discriminator.
+ */
+export const PROTOCOL_VERSION = 2;
+
+/** Where a player is, for the other player's mirror (x, y, z, yaw), plus the entity if seen. */
+export interface Presence {
+  p?: [number, number, number, number];
+  e?: [number, number, number, number] | null;
+}
+
+export type ClientMessage =
+  | { t: 'hello'; protocol: number }
+  | { t: 'ping'; at: number }
+  | { t: 'create'; character: Character }
+  | { t: 'join'; code: string }
+  | { t: 'rejoin'; code: string; token: string }
+  | { t: 'action'; action: Action }
+  | { t: 'presence'; presence: Presence };
 
 export type ServerMessage =
   | { t: 'welcome'; protocol: number; serverTime: number }
   | { t: 'pong'; at: number }
+  | { t: 'joined'; code: string; character: Character; token: string }
+  | { t: 'state'; state: GameState }
+  | { t: 'fx'; fx: Fx[] }
+  | { t: 'presence'; presence: Presence }
   | { t: 'error'; reason: string };
 
 export function encode(msg: ClientMessage | ServerMessage): string {
