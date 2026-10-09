@@ -27,10 +27,17 @@ export class ServerLink extends LinkBase implements Link {
   private retry = 0;
   private closed = false;
   private presenceAt = 0;
+  private keepAwake = 0;
 
   constructor(private intent: ServerIntent) {
     super();
     this.connect();
+    // Free hosts put a server to sleep when no HTTP requests arrive, even with sockets open;
+    // sleeping would drop the room mid-game.
+    this.keepAwake = window.setInterval(
+      () => void fetch('./health', { cache: 'no-store' }).catch(() => {}),
+      4 * 60_000,
+    );
   }
 
   private send(msg: ClientMessage): void {
@@ -106,6 +113,7 @@ export class ServerLink extends LinkBase implements Link {
 
   close(): void {
     this.closed = true;
+    window.clearInterval(this.keepAwake);
     this.ws?.close();
   }
 
