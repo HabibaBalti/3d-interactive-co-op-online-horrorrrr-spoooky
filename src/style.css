@@ -341,14 +341,14 @@ body {
   text-wrap: balance;
 }
 
-.inspect-hint {
+.inspect-lore {
   font: italic 500 15px/1.4 var(--serif);
   color: rgba(217, 207, 184, 0.42);
   text-wrap: balance;
-  animation: inspect-hint 2s ease 2.6s both;
+  animation: inspect-lore 2s ease 2.6s both;
 }
 
-.inspect-hint:empty {
+.inspect-lore:empty {
   display: none;
 }
 
@@ -373,7 +373,7 @@ body {
   }
 }
 
-@keyframes inspect-hint {
+@keyframes inspect-lore {
   from {
     opacity: 0;
   }
@@ -381,7 +381,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .inspect > *,
-  .inspect-hint {
+  .inspect-lore {
     animation-duration: 0.01s;
   }
 }

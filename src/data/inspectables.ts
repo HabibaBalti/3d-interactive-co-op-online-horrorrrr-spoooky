@@ -2,13 +2,14 @@ import type { Timeline } from '../../shared/types';
 
 /**
  * Things worth a closer look. Looking at one zooms in and shows a name, one short line, and a
- * faint hint that fades in. Hints point the player toward their partner, never at an answer:
- * every puzzle still needs both players talking.
+ * faint line of lore that fades in: a fragment of the family's history. Lore deepens the story
+ * and lets the truth surface slowly; it never gives away a puzzle answer.
  */
 export interface InspectText {
   name: string;
   line: string;
-  hint?: string;
+  /** A faint fragment of family history, shown after a moment. */
+  lore?: string;
   /** A sound the object makes when you lean in. */
   sound?: 'message' | 'static';
 }
@@ -31,12 +32,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Grandfather clock',
         line: 'Still ticking through the storm.',
-        hint: 'The hands can be moved. Someone may know where they belong.',
+        lore: 'Dad winds it every Sunday. He says a house needs a heartbeat.',
       },
       present: {
         name: 'Grandfather clock',
         line: 'Stopped. The hands haven’t moved in years.',
-        hint: 'Describe exactly where each hand points.',
+        lore: 'Nobody wound it after that night. Nobody wanted to.',
       },
     },
   },
@@ -47,13 +48,13 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Walkie-talkie',
         line: 'Sam’s. He made you take the other one.',
-        hint: 'Whoever answers is listening. Talk to them.',
+        lore: 'Channel three. Sam’s secret channel. “Only for us, okay?”',
         sound: 'static',
       },
       present: {
         name: 'Walkie-talkie',
         line: 'Your old toy. It shouldn’t work. It hisses.',
-        hint: 'Someone is on the other end. Talk to them.',
+        lore: 'Channel three. You’d forgotten. Your hand hadn’t.',
         sound: 'static',
       },
     },
@@ -64,7 +65,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       present: {
         name: 'Answering machine',
         line: 'Mum’s. One message, never erased.',
-        hint: 'Listen to where she stops.',
+        lore: 'The tape is worn thin in one place. She replayed it.',
         sound: 'message',
       },
     },
@@ -75,12 +76,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Photograph',
         line: 'Mum and Dad, younger, laughing.',
-        hint: 'Remember the order they hang in.',
+        lore: 'The summer before Sam was born. Nobody looks tired yet.',
       },
       present: {
         name: 'Photograph',
         line: 'Faded. Mum and Dad.',
-        hint: 'Does the wall still look the way it used to?',
+        lore: 'In her last years, Mum kept this one facing the wall.',
       },
     },
   },
@@ -90,12 +91,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Photograph',
         line: 'Nora and Sam at the lake.',
-        hint: 'Remember who is in it.',
+        lore: 'Nora taught him to float that day. He wouldn’t let go.',
       },
       present: {
         name: 'Photograph',
         line: 'Water got in. Only a boy is left in it.',
-        hint: 'Ask who else should be there.',
+        lore: 'Of all things, it was water that got into it.',
       },
     },
   },
@@ -105,12 +106,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Photograph',
         line: 'All four of them on the porch.',
-        hint: 'Count the faces.',
+        lore: 'Dad set the timer and ran. He almost made it.',
       },
       present: {
         name: 'Photograph',
         line: 'Four on the porch. One face is scratched out.',
-        hint: 'Whose face was it?',
+        lore: 'The scratches are careful. Someone took their time.',
       },
     },
   },
@@ -120,10 +121,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Photograph',
         line: 'Sam, grinning, with his walkie-talkie.',
+        lore: 'He wouldn’t put the walkie-talkie down for a week.',
       },
       present: {
         name: 'Photograph',
         line: 'Hanging crooked. Someone took it down once.',
+        lore: 'Taken down and hung back crooked. More than once.',
       },
     },
   },
@@ -133,12 +136,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Sam’s drawing',
         line: 'A girl in red going down the stairs.',
-        hint: 'Why did he colour the door so dark?',
+        lore: 'He draws the stairs a lot lately. Always going down.',
       },
       present: {
         name: 'Your drawing',
         line: 'Soft with damp. More blue than you remember.',
-        hint: 'You drew this. When?',
+        lore: 'You don’t remember drawing it. Mum kept it anyway.',
       },
     },
   },
@@ -148,12 +151,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Cookie jar',
         line: 'Where Dad keeps what he doesn’t want found.',
-        hint: 'Hiding places matter in this house.',
+        lore: 'Dad hides his keys in here. Everyone knows. Nobody says.',
       },
       present: {
         name: 'Cookie jar',
         line: 'Dust inside. Nothing else.',
-        hint: 'Who used to hide things here?',
+        lore: 'Empty for years. It still smells faintly of cinnamon.',
       },
     },
   },
@@ -164,7 +167,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Dinner',
         line: 'Four places set. It went cold.',
-        hint: 'Count them. Remember the number.',
+        lore: 'Mum always sets four. Even when someone is late.',
       },
     },
   },
@@ -174,7 +177,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       present: {
         name: 'Dining table',
         line: 'A dust sheet. Fewer chairs than there should be.',
-        hint: 'How many sat here, back then?',
+        lore: 'Three chairs under the sheet. Mum gave the fourth away.',
       },
     },
   },
@@ -184,12 +187,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Television',
         line: 'Storm warnings, then a late film.',
-        hint: 'Home videos play here too.',
+        lore: 'Storm warnings on every channel. Dad keeps turning it up.',
       },
       present: {
         name: 'Television',
         line: 'Dead. A tape is still in the player.',
-        hint: 'Old tapes remember what people won’t.',
+        lore: 'There’s still a tape inside. Someone stopped it halfway.',
       },
     },
   },
@@ -200,12 +203,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Piano',
         line: 'Little coloured stickers on the keys.',
-        hint: 'Sam learned songs by colour.',
+        lore: 'Sam can only play one song. You taught him.',
       },
       present: {
         name: 'Piano',
         line: 'Under the sheet, the stickers are still on the keys.',
-        hint: 'Someone could tell you which colours to play.',
+        lore: 'Mum never played again. She never sold it, either.',
       },
     },
   },
@@ -216,7 +219,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Music box',
         line: 'Yours. Coloured marks around the drum.',
-        hint: 'Read the colours to someone with a piano.',
+        lore: 'Grandma’s. It plays the song you hum him to sleep with.',
       },
     },
   },
@@ -226,12 +229,12 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       '1994': {
         name: 'Valves',
         line: 'Four wheels, four colours. Pipes vanish into the wall.',
-        hint: 'You can’t see where they go. Someone else might.',
+        lore: 'Dad says never touch them. The basement floods every spring.',
       },
       present: {
         name: 'Valves',
         line: 'The pipes are bare now. You can follow every one.',
-        hint: 'She would need to know which colour comes first.',
+        lore: 'Drained for years now. The tide line is still on the wall.',
       },
     },
   },

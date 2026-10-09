@@ -45,7 +45,7 @@ let soundscape: Soundscape | null = null;
 let house!: House;
 let flashlight: Flashlight | null = null;
 const player = new PlayerController(engine.camera, input, null!, () => settings);
-const inspector = new Inspector(engine.camera, input, new InspectCard(app, () => settings.hints));
+const inspector = new Inspector(engine.camera, input, new InspectCard(app, () => settings.lore));
 
 function buildHouse(): void {
   if (house) {

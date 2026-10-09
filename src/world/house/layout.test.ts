@@ -64,7 +64,7 @@ describe('inspectables', () => {
     for (const item of Object.values(INSPECTABLES)) {
       for (const t of Object.values(item.text)) {
         expect(t.line.split(' ').length).toBeLessThanOrEqual(12);
-        expect((t.hint ?? '').split(' ').length).toBeLessThanOrEqual(12);
+        expect((t.lore ?? '').split(' ').length).toBeLessThanOrEqual(12);
       }
     }
   });
