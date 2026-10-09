@@ -1,7 +1,10 @@
 import type { GameContext, Module } from './context';
 import { echoesModule } from './Echoes';
+import { endingModule } from './Ending';
 import { radioModule } from './Radio';
 import { wrongnessModule } from './Wrongness';
+import { basementModule } from './puzzles/basement';
+import { boardModule } from './puzzles/board';
 import { clockModule } from './puzzles/clock';
 import { floorModule } from './puzzles/floor';
 import { huntModule } from './puzzles/hunt';
@@ -20,6 +23,9 @@ export function createModules(ctx: GameContext): Module[] {
     tapeModule(ctx),
     huntModule(ctx),
     mirrorModule(ctx),
+    basementModule(ctx),
+    boardModule(ctx),
+    endingModule(ctx),
     radioModule(ctx),
     wrongnessModule(ctx),
     echoesModule(ctx),

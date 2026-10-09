@@ -221,4 +221,54 @@ export const ECHOES: Echo[] = [
     ],
     duration: 11,
   },
+  // --- Act 3 ---
+  {
+    id: 'mum-at-the-stairs',
+    timeline: 'present',
+    when: 'floodStarted',
+    figures: [
+      {
+        kind: 'adult',
+        path: [
+          [-1.0, -3, -0.6],
+          [-1.0, -3, -0.7],
+        ],
+      },
+    ],
+    lines: [{ who: 'ruth', text: 'Nora…', pause: 2.5 }],
+    duration: 9,
+  },
+  {
+    id: 'behind-the-door',
+    timeline: '1994',
+    when: 'climax',
+    figures: [],
+    lines: [
+      { who: 'child', text: 'Ninety-eight… ninety-nine… a hundred.', pause: 1.5 },
+      { who: 'child', text: 'Nora?', pause: 2 },
+      { who: 'child', text: 'Nora, I don’t like the thunder. I’m going back to bed.', pause: 1.5 },
+    ],
+    duration: 12,
+  },
+  {
+    id: 'at-the-bolt',
+    timeline: 'present',
+    when: 'climax',
+    figures: [
+      {
+        kind: 'child',
+        path: [
+          [0.25, 0, -4.7],
+          [0.05, 0, -4.95],
+          [0.05, 0, -4.95],
+          [1.0, 0, 3.4],
+        ],
+      },
+    ],
+    lines: [
+      { who: 'child', text: 'Go away, thunder. Go away.', pause: 1 },
+      { who: 'child', text: 'Ninety-nine… a hundred. Nora?', pause: 2 },
+    ],
+    duration: 14,
+  },
 ];

@@ -111,11 +111,18 @@ export class Door implements Interactable {
       target.add(plate, bar);
       this.root.add(target);
       interaction.register(target, {
-        prompt: () => (this.angle > 0.05 ? null : this.bolted ? 'unbolt' : 'bolt'),
+        prompt: () =>
+          this.angle > 0.05 ? null : this.boltStuck ? 'stuck' : this.bolted ? 'unbolt' : 'bolt',
         interact: () => {
+          if (this.boltStuck) {
+            this.rattle = 0.3;
+            this.sound('rattle');
+            return;
+          }
           this.bolted = !this.bolted;
           this.placeBolt();
           this.sound(this.bolted ? 'bolt' : 'unbolt');
+          this.onBolt?.(this.bolted);
         },
       });
       this.placeBolt();
@@ -129,6 +136,11 @@ export class Door implements Interactable {
     if (!this.boltBar) return;
     this.boltBar.position[this.boltAxis] = this.boltRest + (this.bolted ? this.boltSlide : 0);
   }
+
+  /** Rusted solid: the bolt won't move (until the story lets it). */
+  boltStuck = false;
+  /** Someone slid the bolt by hand. */
+  onBolt: ((bolted: boolean) => void) | null = null;
 
   /** Story overrides: the house can lock, unlock or bolt a door by itself. */
   forceLocked: boolean | null = null;

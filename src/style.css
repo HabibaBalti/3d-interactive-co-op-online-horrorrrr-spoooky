@@ -897,3 +897,209 @@ body {
   border-color: var(--blood);
   transform: translateY(-6px);
 }
+
+.underwater {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(14, 44, 46, 0.55), rgba(2, 10, 12, 0.92));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.underwater.on {
+  opacity: 1;
+}
+
+.wheel {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 7px solid var(--c);
+  background: radial-gradient(circle, var(--c) 0 18%, transparent 19%);
+  cursor: pointer;
+  transition: transform 0.6s ease;
+}
+
+.wheel:hover {
+  transform: rotate(40deg);
+}
+
+.wheel.shut {
+  transform: rotate(270deg);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.candles,
+.locks,
+.partner-half {
+  display: flex;
+  gap: 10px;
+}
+
+.candles span {
+  width: 10px;
+  height: 26px;
+  border-radius: 3px 3px 1px 1px;
+  background: #d8d0b8;
+  opacity: 0.35;
+  position: relative;
+}
+
+.candles span.lit {
+  opacity: 1;
+}
+
+.candles span.lit::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  width: 6px;
+  height: 9px;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 40% 40%;
+  background: #ffb040;
+  box-shadow: 0 0 10px #ffa030;
+}
+
+.lock {
+  width: 18px;
+  height: 14px;
+  border: 2px solid rgba(217, 207, 184, 0.5);
+  border-radius: 2px;
+  position: relative;
+  margin-top: 8px;
+}
+
+.lock::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: -10px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgba(217, 207, 184, 0.5);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+}
+
+.lock.on,
+.lock.on::before {
+  border-color: var(--blood);
+}
+
+.lock.them {
+  opacity: 0.6;
+}
+
+.board-half {
+  display: grid;
+  gap: 8px;
+}
+
+.board-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.face {
+  width: 40px;
+  height: 46px;
+  object-fit: cover;
+  border: 2px solid #3a2414;
+}
+
+.pick {
+  width: 46px;
+  height: 46px;
+  padding: 6px;
+  background: rgba(7, 4, 10, 0.6);
+  border: 1px solid rgba(217, 207, 184, 0.3);
+  color: rgba(217, 207, 184, 0.8);
+  cursor: pointer;
+}
+
+.pick svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pick.face-pick {
+  padding: 0;
+  width: 46px;
+  height: 52px;
+}
+
+.pick.on {
+  border-color: var(--blood);
+  background: rgba(163, 20, 28, 0.35);
+  color: #fff;
+}
+
+.pick:disabled {
+  cursor: default;
+}
+
+.partner-half span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 207, 184, 0.5);
+}
+
+.partner-half span.on {
+  background: rgba(217, 207, 184, 0.8);
+}
+
+.credits {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  padding-inline: 16px;
+  text-align: center;
+  background: #07040a;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+
+.credits.on {
+  opacity: 1;
+}
+
+.credits.truth {
+  background: #efe8d8;
+  color: #1a1210;
+}
+
+.credits h1 {
+  margin: 0;
+  font: 800 clamp(36px, 8vw, 96px) / 1 var(--serif);
+  letter-spacing: 0.18em;
+}
+
+.credits p {
+  margin: 0;
+  font: italic 18px/1.5 var(--serif);
+  max-width: 40ch;
+}
+
+.credits .menu-btn {
+  color: inherit;
+  background: transparent;
+}
