@@ -27,7 +27,7 @@ export class GrandfatherClock {
     palette: TimelinePalette,
     private readonly running: boolean,
   ) {
-    const wood = toonMaterial({ color: palette.wood });
+    const wood = toonMaterial({ color: palette.surfaces.wood });
     const case_ = inkEdges(new Mesh(new BoxGeometry(0.55, 2.1, 0.35), wood), palette.ink);
     case_.position.y = 1.05;
     this.root.add(case_);

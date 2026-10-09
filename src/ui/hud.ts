@@ -1,11 +1,38 @@
 import type { ProbeState } from '../net/ServerProbe';
-import type { Settings } from '../settings/settings';
-import type { Timeline } from '../../shared/types';
 
-/** Dev HUD for M0: hotkeys, current toggles and server status. Deliberately tiny. */
-export class Hud {
+/** Centre dot that swells over something usable and shows its one-word prompt. */
+export class Reticle {
+  private readonly el: HTMLElement;
+  private readonly label: HTMLElement;
+  private last: string | null = null;
+
+  constructor(parent: HTMLElement) {
+    this.el = document.createElement('div');
+    this.el.className = 'reticle';
+    this.el.innerHTML = '<div class="reticle-dot"></div><div class="reticle-label"></div>';
+    this.label = this.el.querySelector('.reticle-label')!;
+    parent.appendChild(this.el);
+  }
+
+  show(visible: boolean): void {
+    this.el.hidden = !visible;
+  }
+
+  setPrompt(prompt: string | null): void {
+    if (prompt === this.last) return;
+    this.last = prompt;
+    this.el.classList.toggle('active', !!prompt);
+    this.label.textContent = prompt ?? '';
+  }
+}
+
+/** Developer readout (dev builds only): where you are and whether the server answers. */
+export class DevHud {
   private readonly el: HTMLElement;
   private server: ProbeState = { status: 'connecting' };
+  private frames = 0;
+  private acc = 0;
+  private fps = 0;
 
   constructor(parent: HTMLElement) {
     this.el = document.createElement('div');
@@ -17,7 +44,13 @@ export class Hud {
     this.server = state;
   }
 
-  render(settings: Settings, timeline: Timeline): void {
+  update(dt: number, lines: string[]): void {
+    this.frames++;
+    this.acc += dt;
+    if (this.acc < 0.5) return;
+    this.fps = Math.round(this.frames / this.acc);
+    this.frames = 0;
+    this.acc = 0;
     const s = this.server;
     const server =
       s.status === 'online'
@@ -25,33 +58,26 @@ export class Hud {
         : s.status === 'connecting'
           ? 'connecting…'
           : 'offline';
-    this.el.innerHTML = `
-      <div><kbd>T</kbd> ${timeline === '1994' ? 'nora · 1994' : 'sam · present'}</div>
-      <div><kbd>Q</kbd> ${settings.quality}</div>
-      <div><kbd>P</kbd> post-fx ${settings.postFx ? 'on' : 'off'}</div>
-      <div><kbd>F</kbd> photosensitive ${settings.photosensitive ? 'on' : 'off'}</div>
-      <div class="server ${s.status}">server ${server}</div>`;
+    this.el.innerHTML = [
+      ...lines.map((l) => `<div>${l}</div>`),
+      `<div>${this.fps} fps</div>`,
+      `<div class="server ${s.status}">server ${server}</div>`,
+    ].join('');
   }
 }
 
-/** Title card. Resolves once the player clicks or presses a key. */
-export function showTitle(parent: HTMLElement): Promise<void> {
+/** Title card. Calls `onStart` synchronously inside the click, so it can take pointer lock. */
+export function showTitle(parent: HTMLElement, onStart: () => void): void {
   const el = document.createElement('div');
   el.className = 'title';
   el.innerHTML = `
     <div class="title-vertical" aria-hidden="true">まだ、ここにいる。</div>
     <h1>STILL HERE</h1>
-    <p class="title-hint">click to listen</p>`;
+    <p class="title-hint">click to enter</p>`;
   parent.appendChild(el);
-  return new Promise((resolve) => {
-    const go = () => {
-      el.classList.add('gone');
-      window.removeEventListener('pointerdown', go);
-      window.removeEventListener('keydown', go);
-      window.setTimeout(() => el.remove(), 2500);
-      resolve();
-    };
-    window.addEventListener('pointerdown', go);
-    window.addEventListener('keydown', go);
+  el.addEventListener('click', () => {
+    el.classList.add('gone');
+    window.setTimeout(() => el.remove(), 2500);
+    onStart();
   });
 }

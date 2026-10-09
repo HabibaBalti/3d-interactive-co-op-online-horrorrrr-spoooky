@@ -11,7 +11,9 @@ ambiguous or impractical.
 - `npm run dev` — Vite client (:5173) + realtime server (:8787) together; Vite proxies `/ws`.
 - `npm run check` — typecheck + lint + prettier check + tests. Run before every commit.
 - `npm run build` then `npm start` — production: one Node process serves `dist/` and `/ws`.
-- Dev URL params: `?timeline=present|1994`, `?notitle`, `?camz=<z>` (pin M0 camera).
+- Dev URL params: `?as=nora|sam`, `?notitle`, `?pos=x,y,z&yaw=deg&pitch=deg`. Dev key `T` swaps
+  timeline in place; `window.__still` exposes engine/player/house in dev builds.
+- Visual checks: Chromium + Playwright are available; drive `?notitle&pos=…` and screenshot.
 
 ## Design rules that affect code
 
@@ -37,6 +39,10 @@ ambiguous or impractical.
   `shared/story/`, interpreted by systems.
 - All colours for a timeline live in `src/render/palettes.ts`; don't hardcode palette colours in
   world code.
+- The house is data (`src/world/house/layout.ts`); change the layout there, not in builder code.
+  Static geometry must go through `StaticBatcher`; only animated/interactive things are separate
+  meshes.
+- Interaction prompts are single lowercase words (`open`, `locked`, `unbolt`).
 - Greybox = primitives + procedural canvas textures (`src/render/textures.ts`). Real assets go in
   `public/assets/` as glTF/GLB (models), OGG (audio), and are lazy-loaded per act.
 - Wrap `localStorage`/`sessionStorage` access in try/catch.

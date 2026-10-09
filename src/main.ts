@@ -1,83 +1,130 @@
 import './style.css';
 import { Engine } from './core/Engine';
 import { Input } from './core/Input';
+import { InteractionSystem } from './interaction/InteractionSystem';
 import { ServerProbe } from './net/ServerProbe';
-import { loadSettings, saveSettings, type Quality } from './settings/settings';
-import { Hud, showTitle } from './ui/hud';
-import { TestHallway } from './world/TestHallway';
-import type { Timeline } from '../shared/types';
+import { Flashlight } from './player/Flashlight';
+import { PlayerController } from './player/PlayerController';
+import { loadSettings, QUALITY_PRESETS, saveSettings, type Settings } from './settings/settings';
+import { DevHud, Reticle, showTitle } from './ui/hud';
+import { PauseMenu } from './ui/pause';
+import { House } from './world/house/House';
+import { HOUSE } from './world/house/layout';
+import { TIMELINE_OF, type Character, type Timeline } from '../shared/types';
 
 const app = document.getElementById('app')!;
+const params = new URLSearchParams(location.search);
+const DEV = import.meta.env.DEV;
+
+// Until pairing exists (M2), the character comes from the URL: ?as=nora (default) or ?as=sam.
+const character: Character = params.get('as') === 'sam' ? 'sam' : 'nora';
+let timeline: Timeline = TIMELINE_OF[character];
+
 let settings = loadSettings();
 const engine = new Engine(app, settings);
-const input = new Input();
-const hud = new Hud(app);
+const input = new Input(engine.renderer.domElement);
+const interaction = new InteractionSystem(engine.camera);
+const reticle = new Reticle(app);
+const devHud = DEV ? new DevHud(app) : null;
 
-const params = new URLSearchParams(location.search);
-let timeline: Timeline = params.get('timeline') === 'present' ? 'present' : '1994';
-let world: TestHallway;
+let house!: House;
+let flashlight: Flashlight | null = null;
+const player = new PlayerController(engine.camera, input, null!, () => settings);
 
-function loadWorld(): void {
-  if (world) {
-    engine.scene.remove(world.root);
-    world.dispose(engine.camera);
+function buildHouse(): void {
+  if (house) {
+    engine.scene.remove(house.root);
+    house.dispose();
   }
-  world = new TestHallway(timeline, engine.camera, {
-    photosensitive: settings.photosensitive,
-    shadows: engine.renderer.shadowMap.enabled,
+  interaction.clear();
+  house = new House(timeline, HOUSE, interaction, {
+    shadows: QUALITY_PRESETS[settings.quality].shadows,
+    photosensitive: () => settings.photosensitive,
   });
-  engine.scene.add(world.root);
-  engine.applyPalette(world.palette);
-  hud.render(settings, timeline);
+  engine.scene.add(house.root);
+  engine.applyPalette(house.palette);
+  interaction.setOccluders(house.occluders);
+  player.setCollision(house.collision);
+
+  // Only Sam, in the dark present, carries a flashlight.
+  flashlight?.dispose();
+  flashlight = timeline === 'present' ? new Flashlight(engine.camera) : null;
+  flashlight?.setShadows(QUALITY_PRESETS[settings.quality].shadows);
 }
 
-function updateSettings(next: Partial<typeof settings>, rebuild = false): void {
+buildHouse();
+const spawn = HOUSE.spawns[character];
+player.spawn(spawn.pos, spawn.yaw);
+if (params.has('pos')) {
+  const [x = 0, y = 0, z = 0] = params.get('pos')!.split(',').map(Number);
+  player.spawn([x, y, z], Number(params.get('yaw') ?? 0));
+  player.pitch = (Number(params.get('pitch') ?? 0) * Math.PI) / 180;
+}
+
+function updateSettings(next: Partial<Settings>): void {
+  const shadowsBefore = QUALITY_PRESETS[settings.quality].shadows;
   settings = { ...settings, ...next };
   saveSettings(settings);
   engine.applySettings(settings);
-  if (rebuild) loadWorld();
-  hud.render(settings, timeline);
+  const shadows = QUALITY_PRESETS[settings.quality].shadows;
+  if (shadows !== shadowsBefore) {
+    house.setShadows(shadows);
+    flashlight?.setShadows(shadows);
+  }
 }
 
-const QUALITIES: Quality[] = ['low', 'medium', 'high'];
-input.onKey('KeyT', () => {
-  timeline = timeline === '1994' ? 'present' : '1994';
-  loadWorld();
-});
-input.onKey('KeyQ', () => {
-  const next = QUALITIES[(QUALITIES.indexOf(settings.quality) + 1) % QUALITIES.length]!;
-  updateSettings({ quality: next }, true);
-});
-input.onKey('KeyP', () => updateSettings({ postFx: !settings.postFx }));
-input.onKey('KeyF', () => updateSettings({ photosensitive: !settings.photosensitive }, true));
+// --- Flow: title → pointer lock → play; releasing the pointer pauses -----------------------
+let started = params.has('notitle');
+let hasLocked = false;
+const paused = () => started && hasLocked && !input.locked;
 
-loadWorld();
+const pause = new PauseMenu(app, character, settings, updateSettings, () => input.requestLock());
+input.onLockChange((locked) => {
+  if (locked) hasLocked = true;
+  pause.show(paused());
+});
+engine.renderer.domElement.addEventListener('click', () => {
+  if (started && !input.locked) input.requestLock();
+});
+if (!started) {
+  showTitle(app, () => {
+    started = true;
+    input.requestLock();
+  });
+}
 
-// M0 camera: a slow, breathing drift down the hall with a little mouse look.
-// The real first-person controller arrives in M1.
-// `?camz=<z>` pins the dolly for screenshots and look-dev.
-const look = { yaw: 0, pitch: 0 };
-const pinnedZ = params.has('camz') ? Number(params.get('camz')) : null;
+// --- Actions ----------------------------------------------------------------------------------
+const active = () => started && !paused();
+input.onKey('KeyE', () => active() && interaction.use());
+input.onClick(() => active() && interaction.use());
+input.onKey('KeyF', () => active() && flashlight?.toggle());
+if (DEV) {
+  // Dev only: look at the other timeline from the same spot.
+  input.onKey('KeyT', () => {
+    timeline = timeline === '1994' ? 'present' : '1994';
+    buildHouse();
+  });
+}
+
+// --- Frame loop -------------------------------------------------------------------------------
 engine.onUpdate((dt, time) => {
-  world.update(dt, time);
-  engine.flash = world.flash;
-  const k = 1 - Math.exp(-dt * 3);
-  look.yaw += (-input.pointer.x * 0.45 - look.yaw) * k;
-  look.pitch += (-input.pointer.y * 0.22 - look.pitch) * k;
-  const cam = engine.camera;
-  cam.position.set(
-    Math.sin(time * 0.21) * 0.15,
-    1.62 + Math.sin(time * 1.1) * 0.012,
-    pinnedZ ?? 4.2 + Math.sin(time * 0.05) * 2.2,
-  );
-  cam.rotation.set(look.pitch, look.yaw, Math.sin(time * 0.3) * 0.006, 'YXZ');
+  const on = active();
+  player.update(dt, on);
+  house.update(dt, time, player.feet.y);
+  flashlight?.update(dt, player.yaw, player.pitch);
+  engine.flash = house.flash;
+  reticle.show(on);
+  reticle.setPrompt(on ? interaction.update() : null);
+  const f = player.feet;
+  devHud?.update(dt, [
+    `${character} · ${timeline}${DEV ? ' · <kbd>T</kbd> swap' : ''}`,
+    `${player.room ?? '—'} · ${f.x.toFixed(1)}, ${f.y.toFixed(1)}, ${f.z.toFixed(1)}`,
+  ]);
 });
 engine.start();
 
-const probe = new ServerProbe((s) => {
-  hud.setServer(s);
-  hud.render(settings, timeline);
-});
-probe.connect();
-
-if (!params.has('notitle')) void showTitle(app);
+if (devHud) {
+  new ServerProbe((s) => devHud.setServer(s)).connect();
+  // Console/automation handle for debugging (dev builds only).
+  Object.assign(window, { __still: { engine, player, interaction, house: () => house } });
+}

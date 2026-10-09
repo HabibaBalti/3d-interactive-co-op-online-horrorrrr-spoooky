@@ -5,11 +5,11 @@ stormy night in 1994. The other is **Sam**, her little brother, decades later in
 family house. Get on a call. Never show each other your screen.
 
 > Design: [`GAME_DESIGN.md`](GAME_DESIGN.md) · Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-> · Status: **M0 (setup)**: art-direction test scene and server stub.
+> · Status: **M1 (greybox house)**: walkable ground floor + basement in both timelines.
 
-| Nora · 1994                                 | Sam · present                                   |
-| ------------------------------------------- | ----------------------------------------------- |
-| ![Nora, 1994](docs/screenshots/m0-1994.jpg) | ![Sam, present](docs/screenshots/m0-entity.jpg) |
+| Nora · 1994                                        | Sam · present                                       |
+| -------------------------------------------------- | --------------------------------------------------- |
+| ![Nora, 1994](docs/screenshots/m1-nora-dining.jpg) | ![Sam, present](docs/screenshots/m1-sam-dining.jpg) |
 
 ## Requirements
 
@@ -25,18 +25,42 @@ npm run dev
 Open http://localhost:5173. This starts the Vite client and the realtime server (port 8787)
 together; Vite proxies `/ws` and `/health` to the server.
 
-### M0 controls (dev)
+### Controls
 
-| Key   |                                               |
-| ----- | --------------------------------------------- |
-| mouse | look around                                   |
-| `T`   | swap timeline (Nora 1994 / Sam present)       |
-| `Q`   | cycle quality low → medium → high             |
-| `P`   | post-processing on/off                        |
-| `F`   | photosensitive mode (tames lightning/flicker) |
+| Key       |                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| W A S D   | move (arrow keys work too)                                                                        |
+| mouse     | look (click the game to capture it)                                                               |
+| shift     | run                                                                                               |
+| C         | crouch (toggle)                                                                                   |
+| E / click | use the thing under the dot                                                                       |
+| F         | flashlight (Sam only)                                                                             |
+| esc       | pause: controls, mouse sensitivity, invert look, head bob, quality, film effects, reduce flashing |
 
-URL params: `?timeline=present`, `?notitle`, `?camz=-4` (pin camera; try it in the present to
-meet the thing at the end of the hall).
+### Dev options
+
+Until pairing lands in M2, pick a character with the URL: `?as=nora` (default) or `?as=sam`.
+
+| URL param                     |                                                       |
+| ----------------------------- | ----------------------------------------------------- |
+| `?as=sam`                     | play Sam (present day)                                |
+| `?notitle`                    | skip the title card (keys work without mouse capture) |
+| `?pos=x,y,z&yaw=90&pitch=-10` | start somewhere specific (yaw 0 = north)              |
+
+In dev builds, `T` swaps to the other timeline in place, and the bottom-left readout shows room,
+position, fps and server status. `window.__still` exposes the engine, player and house for the
+console.
+
+### Trying M1
+
+- **Nora:** the lamps flicker, the TV glows in the living room, the clock in the hall is running,
+  rain runs down the windows, and lightning flashes through them. Open the door in the hall's
+  north end and go down the stairs to the basement.
+- **Sam (`?as=sam`):** the same house decades later. Flashlight on `F`, dust sheets over the
+  furniture, chairs knocked over, the plates gone, water on the floor, boarded windows, the clock
+  stopped at 3:17. The basement door is **bolted from the hall side**: aim at the bolt beside the
+  door (chest height) to slide it, then open the door.
+- The stairs up are behind a locked door (upstairs comes later). The front door is locked.
 
 ### Two players on one machine
 

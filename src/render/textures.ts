@@ -258,3 +258,79 @@ export function blotchTexture(seed: number): CanvasTexture {
   }
   return finish(c);
 }
+
+/** Floorboards: long planks with grain and gaps. Tiles 2 m (10 planks) per texture. */
+export function plankTexture(base: string, decay: number): CanvasTexture {
+  const size = 256;
+  const [c, ctx] = canvas(size);
+  const rand = seeded(42);
+  const pw = size / 10;
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = base;
+    ctx.fillRect(i * pw, 0, pw, size);
+    ctx.fillStyle = `rgba(${rand() > 0.5 ? '255,220,180' : '0,0,0'},${0.04 + rand() * 0.08})`;
+    ctx.fillRect(i * pw, 0, pw, size);
+    // Grain.
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 1;
+    for (let g = 0; g < 4; g++) {
+      ctx.beginPath();
+      const x = i * pw + rand() * pw;
+      ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + 3, size * 0.3, x - 3, size * 0.6, x + 1, size);
+      ctx.stroke();
+    }
+    // Board ends, staggered.
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(i * pw, (rand() * size) | 0, pw, 2);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  for (let i = 0; i <= 10; i++) ctx.fillRect(i * pw - 1, 0, 2, size);
+  for (let i = 0; i < 10 * decay; i++) {
+    stain(ctx, rand() * size, rand() * size, 15 + rand() * 40, 'rgba(10,20,15,0.35)');
+  }
+  return finish(c, true);
+}
+
+/** Checkerboard kitchen lino. Tiles 0.6 m per texture (2×2 tiles). */
+export function tileTexture(a: string, b: string, decay: number): CanvasTexture {
+  const size = 128;
+  const [c, ctx] = canvas(size);
+  const rand = seeded(9);
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < 2; x++) {
+      ctx.fillStyle = (x + y) % 2 ? a : b;
+      ctx.fillRect(x * 64, y * 64, 64, 64);
+    }
+  }
+  for (let i = 0; i < 6 * decay; i++) {
+    stain(ctx, rand() * size, rand() * size, 10 + rand() * 25, 'rgba(20,30,20,0.4)');
+  }
+  return finish(c, true);
+}
+
+/** Poured concrete with blotches; tiles 2 m. */
+export function concreteTexture(base: string, decay: number): CanvasTexture {
+  const size = 256;
+  const [c, ctx] = canvas(size);
+  const rand = seeded(5);
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 40; i++) {
+    stain(
+      ctx,
+      rand() * size,
+      rand() * size,
+      8 + rand() * 30,
+      `rgba(0,0,0,${0.05 + rand() * 0.06})`,
+    );
+  }
+  for (let i = 0; i < 400; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${rand() * 0.06})`;
+    ctx.fillRect(rand() * size, rand() * size, 2, 2);
+  }
+  for (let i = 0; i < 10 * decay; i++) {
+    stain(ctx, rand() * size, rand() * size, 20 + rand() * 40, 'rgba(10,25,15,0.35)');
+  }
+  return finish(c, true);
+}

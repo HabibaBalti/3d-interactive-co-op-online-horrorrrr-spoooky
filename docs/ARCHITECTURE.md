@@ -2,14 +2,14 @@
 
 ## Stack
 
-| Concern    | Choice                                                                                      | Why                                                                                                                                                                                                                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Build      | Vite + TypeScript (strict)                                                                  | Fast HMR, zero-config TS, good asset handling                                                                                                                                                                                                                                                              |
-| Rendering  | **Three.js, imperative** (not React Three Fiber)                                            | The game is one long-lived scene with a custom frame loop, render passes and per-timeline worlds. R3F's value is declarative UI-like scenes; here it would add a reconciler between us and the loop, plus React for a UI that is a handful of overlays. Plain Three keeps control and performance obvious. |
-| Post       | Three.js `EffectComposer` + one custom combined shader pass                                 | All screen effects (grain, vignette, aberration, paper, grade, flash) are one full-screen pass, so they cost one draw. The `postprocessing` library is a drop-in upgrade if we later need SMAA/bloom/DOF.                                                                                                  |
-| Physics    | _M1 decision_: custom capsule-vs-box collision first; Rapier only if we need dynamic bodies | The house is static boxes; a walker doesn't need a physics engine. Rapier adds ~1 MB of WASM.                                                                                                                                                                                                              |
-| Audio      | Web Audio / `THREE.PositionalAudio` (M4)                                                    | Spatial audio is core; Howler only if UI audio becomes fiddly.                                                                                                                                                                                                                                             |
-| Networking | **Node + `ws`, server-authoritative** (below)                                               |                                                                                                                                                                                                                                                                                                            |
+| Concern    | Choice                                                                                                       | Why                                                                                                                                                                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build      | Vite + TypeScript (strict)                                                                                   | Fast HMR, zero-config TS, good asset handling                                                                                                                                                                                                                                                              |
+| Rendering  | **Three.js, imperative** (not React Three Fiber)                                                             | The game is one long-lived scene with a custom frame loop, render passes and per-timeline worlds. R3F's value is declarative UI-like scenes; here it would add a reconciler between us and the loop, plus React for a UI that is a handful of overlays. Plain Three keeps control and performance obvious. |
+| Post       | Three.js `EffectComposer` + one custom combined shader pass                                                  | All screen effects (grain, vignette, aberration, paper, grade, flash) are one full-screen pass, so they cost one draw. The `postprocessing` library is a drop-in upgrade if we later need SMAA/bloom/DOF.                                                                                                  |
+| Physics    | Custom cylinder-vs-AABB collision + floor zones (`src/physics/`); Rapier only if we ever need dynamic bodies | The house is static boxes; a walker doesn't need a physics engine. Rapier adds ~1 MB of WASM.                                                                                                                                                                                                              |
+| Audio      | Web Audio / `THREE.PositionalAudio` (M4)                                                                     | Spatial audio is core; Howler only if UI audio becomes fiddly.                                                                                                                                                                                                                                             |
+| Networking | **Node + `ws`, server-authoritative** (below)                                                                |                                                                                                                                                                                                                                                                                                            |
 
 ## Networking recommendation: a small Node `ws` server
 
@@ -64,12 +64,16 @@ Folders marked _(M#)_ don't exist yet; they are created by the milestone that ne
 ├── src/
 │   ├── main.ts                # Bootstrap
 │   ├── style.css
-│   ├── core/                  # Engine (renderer, loop), Input, (M1) assets loader
-│   ├── render/                # PostFX, palettes, procedural textures, materials/, shaders/
+│   ├── core/                  # Engine (renderer, loop), Input (keys, pointer lock)
+│   ├── render/                # PostFX, palettes, textures, StaticBatcher, materials/, shaders/
 │   ├── settings/              # Settings + quality presets (persisted)
-│   ├── world/                 # Timeline worlds, house layout, props/
-│   ├── player/                # (M1) first-person controller, flashlight, collision
-│   ├── interaction/           # (M1) look-at + E/click interactables
+│   ├── physics/               # CollisionWorld: wall/prop boxes + floor zones and stair ramps
+│   ├── world/
+│   │   ├── house/             # layout.ts (THE HOUSE AS DATA), House builder, Door, props, walls
+│   │   ├── props/             # Hand-built dynamic props (grandfather clock)
+│   │   └── Storm.ts           # 1994 lightning
+│   ├── player/                # First-person controller, Sam's flashlight
+│   ├── interaction/           # Look-at + E/click interactables (one-word prompts)
 │   ├── net/                   # Server connection; (M2) room client, flag sync
 │   ├── story/                 # (M2) flag store, act/loop state, (M4) wrongness system
 │   ├── puzzles/               # (M3+) one module per puzzle: clock/, floorboards/, lullaby/, …
@@ -92,6 +96,25 @@ Folders marked _(M#)_ don't exist yet; they are created by the milestone that ne
   `src/data/` / `shared/story/` and interpreted by systems, so new content mostly means new data.
 - **Rendering knows nothing about networking**, and puzzles talk to the network only through the
   story/flag store.
+
+## The house as data (M1)
+
+`src/world/house/layout.ts` describes the Hale house once, for both timelines:
+
+- **walls**: axis-aligned segments with openings (door / arch / window). `walls.ts` splits them
+  into solid boxes for rendering and collision; doors get a `Door` (hinged, lockable, optional
+  one-sided bolt).
+- **floors / ramps / ceilings**: slabs the player stands on (floor zones carry a room id), stair
+  ramps between levels.
+- **props**: `kind` + placement, with a `present` override (`'missing'`, moved, tilted, or under a
+  dust sheet) and `only` for one-timeline props. Builders in `props.ts` make them from primitives.
+- **lights**: per timeline, with a flicker style. **puddles** and mould are present-day only.
+
+`House` builds one timeline from this data: all static geometry goes through `StaticBatcher`
+(merged into one mesh per surface + one ink-line mesh: about 70 draw calls for the whole house),
+while doors, the clock, the drawing and windows stay separate. Textured surfaces get world-space
+UVs so patterns stay at constant scale. M2/M3 will layer story flags on top: a flag can override
+a prop's placement or a door's state, which is how "Nora hides it → Sam finds it" will work.
 
 ## Rendering pipeline
 

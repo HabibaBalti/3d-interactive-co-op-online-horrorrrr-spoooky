@@ -83,9 +83,10 @@ false story, weaker as they uncover the truth. Never explained in words.
 6. **Hunts by sound.** The entity tracks noise (running, knocking things over, doors). The hiding
    player stays still while the partner guides them. Optional opt-in **mic input** (Web Audio)
    makes loud talking attract it; game fully works without it.
-7. **The loop.** Failing the reconstruction or choosing the lie loops the night (to act start or
-   game start — to be tuned). Each loop: more water, rot, darker drawings, more aggressive entity,
-   fewer working lamps. Solved puzzles are fast to redo or skipped.
+7. **The loop.** Failing the reconstruction or choosing the lie loops the night back to the
+   **start of the current act**; puzzles already solved are **auto-completed** on the new loop
+   _(decided at M1)_. Each loop: more water, rot, darker drawings, more aggressive entity, fewer
+   working lamps.
 8. **Environmental "wrongness".** Data-driven changes applied when the target is outside the camera
    frustum: plates vanish, a face is scratched out, a door is open, a chair moved, a drawing changed.
 
@@ -183,3 +184,12 @@ sensitivity.
 | M7  | Polish         | Real assets, accessibility, settings menu, performance, playtest fixes                                                      |
 
 Stop for review after each milestone.
+
+### Decisions log
+
+| When | Decision                                                                                      |
+| ---- | --------------------------------------------------------------------------------------------- |
+| M0   | Art direction (stylized low-poly + Japanese horror, two palettes) approved.                   |
+| M0   | Plain Three.js (no R3F); custom collision (no physics engine); Node + `ws` server.            |
+| M1   | Build **ground floor + basement first**; upstairs comes later (stair door is locked for now). |
+| M1   | A loop restarts the **current act**, with solved puzzles auto-completed.                      |

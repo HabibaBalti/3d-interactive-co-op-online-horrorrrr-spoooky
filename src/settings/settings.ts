@@ -5,6 +5,10 @@ export interface Settings {
   postFx: boolean;
   /** Reduces lightning flashes and lamp flicker. */
   photosensitive: boolean;
+  /** Multiplier on mouse look speed. */
+  mouseSensitivity: number;
+  invertY: boolean;
+  headBob: boolean;
 }
 
 export interface QualityPreset {
@@ -24,16 +28,23 @@ export const QUALITY_PRESETS: Record<Quality, QualityPreset> = {
 
 const STORAGE_KEY = 'still-here.settings';
 
-const DEFAULTS: Settings = { quality: 'medium', postFx: true, photosensitive: false };
+export const DEFAULT_SETTINGS: Settings = {
+  quality: 'medium',
+  postFx: true,
+  photosensitive: false,
+  mouseSensitivity: 1,
+  invertY: false,
+  headBob: true,
+};
 
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
   } catch {
     // storage unavailable (private mode, blocked): fall back to defaults
   }
-  return { ...DEFAULTS };
+  return { ...DEFAULT_SETTINGS };
 }
 
 export function saveSettings(settings: Settings): void {
