@@ -67,9 +67,13 @@ export class Inspector {
   /** Called when a close-up with controls closes (to take the mouse back). */
   onPanelClosed: (() => void) | null = null;
 
-  show(target: InspectTarget, panel?: HTMLElement): void {
+  private onClose: (() => void) | null = null;
+
+  show(target: InspectTarget, panel?: HTMLElement, onClose?: () => void): void {
+    if (this.target && this.dir === 1) this.close();
     this.target = target;
     this.panel = panel ?? null;
+    this.onClose = onClose ?? null;
     if (panel && document.pointerLockElement) document.exitPointerLock();
     this.dir = 1;
     this.orbitX = this.orbitY = 0;
@@ -108,7 +112,10 @@ export class Inspector {
     const side = new Vector3().crossVectors(this.up, dir).normalize();
     dir.applyAxisAngle(side, -pitch).normalize();
     this.toPos.copy(this.centre).addScaledVector(dir, dist);
-    this.m.lookAt(this.toPos, this.centre, top ? new Vector3(-f.x, 0, -f.z) : this.up);
+    // With controls on screen, look a little below the object so it sits above them.
+    const aimAt = this.centre.clone();
+    if (this.panel) aimAt.y -= dist * 0.28;
+    this.m.lookAt(this.toPos, aimAt, top ? new Vector3(-f.x, 0, -f.z) : this.up);
     this.toQuat.setFromRotationMatrix(this.m);
     this.dist = dist;
   }
@@ -117,6 +124,9 @@ export class Inspector {
     if (!this.target || this.dir === -1) return;
     this.dir = -1;
     this.view.hide();
+    const done = this.onClose;
+    this.onClose = null;
+    done?.();
     if (this.panel) {
       this.panel = null;
       this.onPanelClosed?.();

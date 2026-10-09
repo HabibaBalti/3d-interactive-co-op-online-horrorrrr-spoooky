@@ -7,6 +7,8 @@ export interface Interactable {
   interact(): void;
   /** Called when the player starts or stops looking at it. */
   hover?(on: boolean): void;
+  /** Small things inside big ones (a key in the clock) win when both are under the reticle. */
+  priority?: number;
 }
 
 const CENTRE = new Vector2(0, 0);
@@ -52,8 +54,18 @@ export class InteractionSystem {
     this.raycaster.far = this.reach;
     this.raycaster.setFromCamera(CENTRE, this.camera);
     const hits = this.raycaster.intersectObjects([...this.occluders, ...this.targets], true);
-    const first = hits.find((h) => shown(h.object));
-    this.setCurrent((first?.object.userData.interactable as Interactable | undefined) ?? null);
+    const visible = hits.filter((h) => shown(h.object));
+    const first = visible[0];
+    let pick = (first?.object.userData.interactable as Interactable | undefined) ?? null;
+    if (first && pick) {
+      // Prefer a higher-priority target just behind the first hit.
+      for (const h of visible) {
+        if (h.distance > first.distance + 0.45) break;
+        const it = h.object.userData.interactable as Interactable | undefined;
+        if (it && (it.priority ?? 0) > (pick.priority ?? 0)) pick = it;
+      }
+    }
+    this.setCurrent(pick);
     return this.current?.prompt() ?? null;
   }
 

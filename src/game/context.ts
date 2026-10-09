@@ -12,6 +12,7 @@ import type { Action, Fx, GameState } from '../../shared/game/types';
 import type { Presence } from '../../shared/protocol';
 import type { Character, Timeline } from '../../shared/types';
 import type { Voice } from './Voice';
+import type { Sfx } from '../audio/Sfx';
 import type { Hud } from './Hud';
 
 /** Everything a puzzle or story module may touch. Rebuilt whenever the world is. */
@@ -32,6 +33,7 @@ export interface GameContext {
   readonly input: Input;
   readonly audio: AudioEngine | null;
   readonly voice: Voice;
+  readonly sfx: Sfx;
   readonly hud: Hud;
   settings(): Settings;
   /** Hold the player still (hiding, cutscenes) or let them go. */

@@ -793,3 +793,82 @@ body {
   max-height: calc(100vh - 32px);
   overflow-y: auto;
 }
+
+.ctl-panel {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.ctl-label {
+  font: 12px var(--mono);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(217, 207, 184, 0.65);
+}
+
+.ctl-gap {
+  width: 18px;
+}
+
+.keys {
+  display: flex;
+  gap: 3px;
+  padding: 10px;
+  background: #1a0e08;
+  border-radius: 3px;
+}
+
+.key {
+  position: relative;
+  width: clamp(26px, 6vw, 44px);
+  height: clamp(90px, 18vh, 140px);
+  background: #e8e0cc;
+  border: 1px solid #000;
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+}
+
+.key:active {
+  background: #c8c0ac;
+  transform: translateY(2px);
+}
+
+.key .sticker {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.sticker.red {
+  background: #b3121c;
+}
+.sticker.blue {
+  background: #1f3fa8;
+}
+.sticker.yellow {
+  background: #d8b020;
+}
+.sticker.green {
+  background: #2a8a3a;
+}
+
+.progress {
+  display: flex;
+  gap: 8px;
+}
+
+.progress span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 207, 184, 0.5);
+}
+
+.progress span.on {
+  background: var(--paper);
+}

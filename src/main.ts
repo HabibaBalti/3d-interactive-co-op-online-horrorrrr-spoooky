@@ -207,6 +207,11 @@ function begin(link: Link, state: GameState): void {
       __still: {
         engine,
         game,
+        /** Automated tests: forget pointer-lock history so the game isn't "paused". */
+        unpause: () => {
+          hasLocked = false;
+          pause.show(false);
+        },
         /** Act as either character (solo practice): __still.as('sam', {type: ...}) */
         as: (c: Character, a: Parameters<Link['act']>[0]) => {
           const prev = link.character;

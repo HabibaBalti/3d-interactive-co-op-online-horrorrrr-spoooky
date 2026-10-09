@@ -65,7 +65,9 @@ const GLOW = new Color('#e8d9b0');
 export interface Lookable {
   readonly target: InspectTarget;
   /** Replace what "use" does (null restores the close-up). */
-  override(use: { prompt: () => string | null; interact: () => void } | null): void;
+  override(
+    use: { prompt: () => string | null; interact: () => void; priority?: number } | null,
+  ): void;
   /** Open the close-up now. */
   look(): void;
   remove(): void;
@@ -110,7 +112,7 @@ export class House {
   private readonly ambient: AmbientLight;
   private readonly moon: DirectionalLight;
   private readonly storm: Storm | null;
-  private clock?: GrandfatherClock;
+  clock?: GrandfatherClock;
   private readonly rand: () => number;
   private readonly lookables = new Map<string, Lookable>();
   private readonly inspectables: {
@@ -428,8 +430,11 @@ export class House {
     this.root.add(proxy);
     const entry = { mats, hovered: false, glow: 0 };
     this.inspectables.push(entry);
-    let use: { prompt: () => string | null; interact: () => void } | null = null;
+    let use: { prompt: () => string | null; interact: () => void; priority?: number } | null = null;
     const interactable = {
+      get priority() {
+        return use?.priority ?? 0;
+      },
       prompt: () => (use ? use.prompt() : object.visible ? 'look' : null),
       interact: () => (use ? use.interact() : this.options.onInspect?.(target)),
       hover: (on: boolean) => (entry.hovered = on),

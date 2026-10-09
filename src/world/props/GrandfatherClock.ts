@@ -25,7 +25,7 @@ export class GrandfatherClock {
 
   constructor(
     palette: TimelinePalette,
-    private readonly running: boolean,
+    private running: boolean,
   ) {
     const wood = toonMaterial({ color: palette.surfaces.wood });
     const case_ = inkEdges(new Mesh(new BoxGeometry(0.55, 2.1, 0.35), wood), palette.ink);
@@ -57,8 +57,18 @@ export class GrandfatherClock {
       new BoxGeometry(0.32, 0.9, 0.01),
       new MeshBasicMaterial({ color: palette.ink, transparent: true, opacity: 0.75 }),
     );
-    window_.position.set(0, 1.0, 0.176);
-    this.root.add(window_);
+    // The glass door is hinged on its left edge so it can swing open.
+    window_.geometry.translate(0.16, 0, 0);
+    this.door.position.set(-0.16, 1.0, 0.176);
+    this.door.add(window_);
+    this.root.add(this.door);
+    // The compartment behind it (where things can be hidden).
+    const back = new Mesh(
+      new BoxGeometry(0.3, 0.86, 0.01),
+      new MeshBasicMaterial({ color: '#0a0606' }),
+    );
+    back.position.set(0, 1.0, -0.15);
+    this.root.add(back);
     this.pendulum = new Group();
     this.pendulum.position.set(0, 1.4, 0.15);
     const rod = new Mesh(new BoxGeometry(0.01, 0.7, 0.01), handMat);
@@ -72,6 +82,32 @@ export class GrandfatherClock {
     this.applyHands();
   }
 
+  /** The hinged glass door over the pendulum; inside is room to hide something. */
+  readonly door = new Group();
+  private doorTarget = 0;
+
+  /** Where something left inside the case sits (local coordinates). */
+  static readonly COMPARTMENT = { x: 0, y: 0.62, z: 0.02 };
+
+  setRunning(on: boolean): void {
+    this.running = on;
+    if (!on) this.pendulum.rotation.z = 0;
+  }
+
+  setTime(hours: number, minutes: number): void {
+    this.minutes = (((hours % 12) + 12) % 12) * 60 + minutes;
+    this.applyHands();
+  }
+
+  get time(): { h: number; m: number } {
+    const total = Math.round(this.minutes) % 720;
+    return { h: Math.floor(total / 60) || 12, m: total % 60 };
+  }
+
+  openDoor(open = true): void {
+    this.doorTarget = open ? -1.9 : 0;
+  }
+
   private applyHands(): void {
     const { hour, minute } = handAngles(Math.floor(this.minutes / 60), this.minutes % 60);
     this.hourHand.rotation.z = -hour;
@@ -79,6 +115,7 @@ export class GrandfatherClock {
   }
 
   update(dt: number, time: number): void {
+    this.door.rotation.y += (this.doorTarget - this.door.rotation.y) * (1 - Math.exp(-dt * 3));
     if (!this.running) return;
     this.pendulum.rotation.z = Math.sin(time * Math.PI) * 0.12;
     this.minutes += dt / 60;

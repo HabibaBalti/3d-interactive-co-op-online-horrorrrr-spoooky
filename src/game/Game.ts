@@ -1,4 +1,5 @@
 import type { AudioEngine } from '../audio/AudioEngine';
+import { Sfx } from '../audio/Sfx';
 import { Soundscape } from '../audio/Soundscape';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
@@ -40,6 +41,7 @@ export class Game {
   readonly inspector: Inspector;
   readonly voice: Voice;
   readonly hud: Hud;
+  readonly sfx: Sfx;
   private readonly card: InspectCard;
   private house!: House;
   private soundscape: Soundscape | null = null;
@@ -68,6 +70,7 @@ export class Game {
     this.player = new PlayerController(engine.camera, input, null!, settings);
     this.voice = new Voice(app, settings);
     this.hud = new Hud(app);
+    this.sfx = new Sfx(audio);
 
     link.onPartner((p) => (this.partner = p));
     link.onFx((fx) => fx.forEach((f) => this.fx(f)));
@@ -176,6 +179,7 @@ export class Game {
       input: this.input,
       audio: this.audio,
       voice: this.voice,
+      sfx: this.sfx,
       hud: this.hud,
       settings: this.settings,
       freeze: (on) => (this.frozen = on),

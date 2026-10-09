@@ -37,3 +37,12 @@ export function noteFrequency(name: string): number {
     SEMITONE[m[1]!]! + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (Number(m[3]) - 4) * 12;
   return 440 * Math.pow(2, semis / 12);
 }
+
+/**
+ * The colour stickers little Sam put on the piano, and the same colours on the music box drum:
+ * each colour is one note, so the box and the piano play the same tune.
+ */
+export const COLOR_NOTE = { red: 'A4', blue: 'B4', yellow: 'C5', green: 'E5' } as const;
+
+/** The piano's white keys in the close-up, left to right. */
+export const PIANO_KEYS = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'] as const;

@@ -464,3 +464,157 @@ export function walkieStatic(ctx: BaseAudioContext, out: AudioNode, t: number): 
   tone(ctx, out, t + dur + 0.06, { f0: 1300, peak: 0.08, decay: 0.07 });
   return t + dur + 0.2;
 }
+
+// --- Puzzle sounds --------------------------------------------------------------------------
+
+/** A struck bell (clock chime): inharmonic partials with a long decay. */
+export function bell(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  t: number,
+  freq: number,
+  peak = 0.25,
+): void {
+  for (const [ratio, amp, decay] of [
+    [1, 1, 3.2],
+    [2.76, 0.4, 1.6],
+    [5.4, 0.18, 0.8],
+    [0.5, 0.35, 2.4],
+  ] as const) {
+    tone(ctx, out, t, { f0: freq * ratio, peak: peak * amp, attack: 0.004, decay });
+  }
+}
+
+/** The grandfather clock striking `count` times. */
+export function chime(ctx: BaseAudioContext, out: AudioNode, t: number, count: number): number {
+  for (let i = 0; i < count; i++) bell(ctx, out, t + i * 1.6, 196, 0.3);
+  return t + count * 1.6 + 3;
+}
+
+/** One plucked comb tooth of a music box. */
+export function musicBoxNote(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  t: number,
+  freq: number,
+  peak = 0.18,
+): void {
+  tone(ctx, out, t, { f0: freq * 2, peak, attack: 0.002, decay: 1.2 });
+  tone(ctx, out, t, { f0: freq * 4.02, peak: peak * 0.3, attack: 0.002, decay: 0.4 });
+  noiseShot(ctx, out, t, { type: 'highpass', freq: 6000, peak: peak * 0.2, decay: 0.01 });
+}
+
+/** An old upright piano key. */
+export function pianoNote(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  t: number,
+  freq: number,
+  peak = 0.3,
+): void {
+  for (const [ratio, amp, decay, type] of [
+    [1, 1, 1.8, 'triangle'],
+    [2, 0.35, 1.0, 'sine'],
+    [3.01, 0.15, 0.6, 'sine'],
+  ] as const) {
+    tone(ctx, out, t, { type, f0: freq * ratio, peak: peak * amp, attack: 0.004, decay });
+  }
+  noiseShot(ctx, out, t, { type: 'bandpass', freq: 1500, q: 1, peak: peak * 0.15, decay: 0.02 });
+}
+
+/** Wrong: a soft dissonant cluster that sinks. */
+export function discord(ctx: BaseAudioContext, out: AudioNode, t: number): void {
+  for (const f of [146.8, 155.6, 207.7]) {
+    tone(ctx, out, t, {
+      type: 'triangle',
+      f0: f,
+      f1: f * 0.94,
+      peak: 0.12,
+      attack: 0.02,
+      decay: 1.4,
+    });
+  }
+}
+
+/** Right: two notes rising, quiet. */
+export function solvedCue(ctx: BaseAudioContext, out: AudioNode, t: number): void {
+  pianoNote(ctx, out, t, 440, 0.12);
+  pianoNote(ctx, out, t + 0.25, 659.3, 0.12);
+}
+
+/** Wood splitting as a board is prised up. */
+export function pry(ctx: BaseAudioContext, out: AudioNode, t: number): void {
+  creak(ctx, out, t, 0.5, 90, 0.25);
+  noiseShot(ctx, out, t + 0.45, { type: 'bandpass', freq: 900, q: 1.5, peak: 0.6, decay: 0.08 });
+  tone(ctx, out, t + 0.45, { f0: 120, f1: 60, peak: 0.4, decay: 0.12 });
+}
+
+/** Picking something up: cloth and a small knock. */
+export function pickup(ctx: BaseAudioContext, out: AudioNode, t: number): void {
+  noiseShot(ctx, out, t, {
+    type: 'bandpass',
+    freq: 2500,
+    q: 0.7,
+    peak: 0.12,
+    attack: 0.02,
+    decay: 0.12,
+  });
+  tone(ctx, out, t + 0.05, { f0: 320, f1: 200, peak: 0.08, decay: 0.05 });
+}
+
+/** A wind-up key being turned: ratchet clicks. */
+export function windup(ctx: BaseAudioContext, out: AudioNode, t: number): number {
+  for (let i = 0; i < 9; i++) {
+    noiseShot(ctx, out, t + i * 0.11, {
+      type: 'bandpass',
+      freq: 3200,
+      q: 3,
+      peak: 0.25,
+      decay: 0.012,
+    });
+  }
+  return t + 1.1;
+}
+
+/** The jump-scare sting: a shriek of clustered tones and noise. Reduced is quieter, no shriek. */
+export function sting(ctx: BaseAudioContext, out: AudioNode, t: number, full: boolean): void {
+  const peak = full ? 0.5 : 0.18;
+  for (const f of [233, 247, 262, 494, 523]) {
+    tone(ctx, out, t, {
+      type: 'sawtooth',
+      f0: f,
+      f1: f * 0.7,
+      peak: peak * 0.25,
+      attack: 0.005,
+      decay: 1.2,
+    });
+  }
+  noiseShot(ctx, out, t, {
+    type: 'highpass',
+    freq: full ? 2000 : 4000,
+    peak: peak * 0.8,
+    attack: 0.005,
+    decay: 0.6,
+  });
+  tone(ctx, out, t, { f0: 60, f1: 30, peak: peak, decay: 0.8 });
+}
+
+/** Water rushing in through a pipe. */
+export function surge(ctx: BaseAudioContext, out: AudioNode, t: number): void {
+  noiseShot(ctx, out, t, {
+    type: 'lowpass',
+    freq: 800,
+    peak: 0.6,
+    attack: 0.15,
+    decay: 1.6,
+    color: 'brown',
+  });
+  noiseShot(ctx, out, t, {
+    type: 'bandpass',
+    freq: 2500,
+    q: 0.5,
+    peak: 0.15,
+    attack: 0.1,
+    decay: 1.2,
+  });
+}

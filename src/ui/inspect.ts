@@ -37,7 +37,7 @@ export class InspectCard implements InspectView {
     this.el.querySelector('.inspect-name')!.textContent = name;
     this.el.querySelector('.inspect-line')!.textContent = line;
     const loreEl = this.el.querySelector<HTMLElement>('.inspect-lore')!;
-    loreEl.textContent = this.lore() && lore ? lore : '';
+    loreEl.textContent = this.lore() && lore && !panel ? lore : '';
     // Restart the fade-in animations.
     this.el.hidden = true;
     void this.el.offsetWidth;
