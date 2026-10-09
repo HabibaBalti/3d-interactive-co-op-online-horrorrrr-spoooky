@@ -62,6 +62,11 @@ console.
   furniture, chairs knocked over, the plates gone, water on the floor, boarded windows, the clock
   stopped at 3:17. The basement door is **bolted from the hall side**: aim at the bolt beside the
   door (chest height) to slide it, then open the door.
+- **Looking closer:** things that matter for the puzzles glow faintly when you look at them and
+  the dot says "look". Press E or click to lean in: the camera frames the object, with its name,
+  one short line, and a faint hint that fades in (hints can be turned off in the pause menu).
+  E or click again steps back. Try the walkie-talkie, Mum's answering machine (Sam), the music
+  box (Nora), the clock, the photos, the piano and the valves in the basement.
 - **Sound (wear headphones):** everything is placed in 3D. Nora hears rain, thunder after the
   lightning, the clock ticking, the TV murmuring, the boiler, her father pacing upstairs and her
   mother humming. Sam hears wind through the boards, dripping water, footsteps upstairs where

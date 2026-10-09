@@ -159,7 +159,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
   },
   plates: {
     view: 'top',
-    distance: 1.6,
+    distance: 2.2,
     text: {
       '1994': {
         name: 'Dinner',
@@ -194,8 +194,8 @@ export const INSPECTABLES: Record<string, Inspectable> = {
     },
   },
   piano: {
-    distance: 1.5,
-    focusY: 0.8,
+    distance: 2.4,
+    focusY: 0.9,
     text: {
       '1994': {
         name: 'Piano',
@@ -210,8 +210,8 @@ export const INSPECTABLES: Record<string, Inspectable> = {
     },
   },
   'music-box': {
-    view: 'top',
-    distance: 0.5,
+    distance: 0.6,
+    focusY: 0.1,
     text: {
       '1994': {
         name: 'Music box',
@@ -221,7 +221,7 @@ export const INSPECTABLES: Record<string, Inspectable> = {
     },
   },
   valves: {
-    distance: 1.9,
+    distance: 2.7,
     text: {
       '1994': {
         name: 'Valves',

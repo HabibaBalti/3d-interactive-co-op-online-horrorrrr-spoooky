@@ -167,7 +167,7 @@ engine.onUpdate((dt, time) => {
   house.update(dt, time, player.feet.y);
   audio?.update(engine.camera.position.y - 1.5, paused() || !started);
   soundscape?.update();
-  flashlight?.update(dt, player.yaw, player.pitch);
+  flashlight?.update(dt, player.yaw, player.pitch, inspector.amount);
   engine.flash = house.flash;
   reticle.show(on && !looking);
   if (looking) interaction.release();

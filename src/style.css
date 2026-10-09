@@ -217,7 +217,8 @@ body {
 }
 
 .pause[hidden],
-.reticle[hidden] {
+.reticle[hidden],
+.inspect[hidden] {
   display: none;
 }
 
@@ -309,10 +310,18 @@ body {
   justify-items: center;
   gap: 8px;
   text-align: center;
+  padding: 28px 40px;
   pointer-events: none;
   text-shadow:
     0 0 12px #000,
     0 0 2px #000;
+  /* A soft pool of shadow so the words stay readable over a bright close-up. */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 4, 10, 0.62) 0%,
+    rgba(7, 4, 10, 0.4) 40%,
+    rgba(7, 4, 10, 0) 70%
+  );
 }
 
 .inspect > * {

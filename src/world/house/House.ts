@@ -379,18 +379,30 @@ export class House {
         mats.push(toon);
       }
     });
+    // An invisible, slightly larger target so small things are easy to aim at.
+    const bounds = new Box3().setFromObject(object);
+    const size = bounds.getSize(new Vector3());
+    const pad = (v: number) => Math.max(v + 0.08, 0.22);
+    const proxy = new Mesh(
+      new BoxGeometry(pad(size.x), pad(size.y), pad(size.z)),
+      new MeshBasicMaterial({ visible: false }),
+    );
+    bounds.getCenter(proxy.position);
+    this.root.add(proxy);
     const entry = { mats, hovered: false, glow: 0 };
     this.inspectables.push(entry);
     const front = new Vector3(0, 0, 1).applyAxisAngle(
       new Vector3(0, 1, 0),
       ((place.rotY ?? 0) * Math.PI) / 180,
     );
-    const target: InspectTarget = { id: prop.id!, object, def, text, front };
-    this.interaction.register(object, {
+    const inspect: InspectTarget = { id: prop.id!, object, def, text, front };
+    const interactable = {
       prompt: () => 'look',
-      interact: () => this.options.onInspect?.(target),
-      hover: (on) => (entry.hovered = on),
-    });
+      interact: () => this.options.onInspect?.(inspect),
+      hover: (on: boolean) => (entry.hovered = on),
+    };
+    this.interaction.register(proxy, interactable);
+    this.interaction.register(object, interactable);
   }
 
   private collideWorldBox(b: Box3): void {

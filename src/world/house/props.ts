@@ -257,20 +257,35 @@ const BUILDERS: Record<Exclude<PropKind, 'clock' | 'drawing'>, (a: Args) => Part
     box('valveRed', 0.03, 0.015, 0.01, 0, 0.03, 0.021, false),
     cyl('black', 0.006, 0.16, 0.025, 0.17, 0, 6),
   ],
-  musicBox: () => [
-    box('woodDark', 0.22, 0.09, 0.15),
-    // Open lid, leaning back.
-    {
-      geometry: new BoxGeometry(0.22, 0.012, 0.15),
-      surface: 'woodDark',
-      matrix: at(0, 0.15, -0.11, -1.2),
-    },
-    {
-      geometry: new CylinderGeometry(0.025, 0.025, 0.14, 12),
-      surface: 'metal',
-      matrix: at(0, 0.1, 0.02, 0, 0, Math.PI / 2),
-    },
-  ],
+  musicBox: () => {
+    const parts: Part[] = [
+      box('wood', 0.22, 0.09, 0.15),
+      // Open lid, tipped right back so the drum shows.
+      {
+        geometry: new BoxGeometry(0.22, 0.012, 0.15),
+        surface: 'wood',
+        matrix: at(0, 0.14, -0.13, -1.85),
+      },
+      {
+        geometry: new CylinderGeometry(0.025, 0.025, 0.15, 14),
+        surface: 'metal',
+        matrix: at(0, 0.105, 0.02, 0, 0, Math.PI / 2),
+      },
+    ];
+    // Coloured marks around the drum (the lullaby, as a child would read it).
+    const marks: SurfaceKey[] = [
+      'valveRed',
+      'valveBlue',
+      'valveYellow',
+      'valveGreen',
+      'valveBlue',
+      'valveRed',
+    ];
+    marks.forEach((s, i) => {
+      parts.push(box(s, 0.012, 0.012, 0.012, -0.06 + i * 0.024, 0.122, 0.035, false));
+    });
+    return parts;
+  },
   answeringMachine: () => [
     box('black', 0.26, 0.06, 0.18),
     box('metal', 0.1, 0.005, 0.07, -0.05, 0.06, 0),

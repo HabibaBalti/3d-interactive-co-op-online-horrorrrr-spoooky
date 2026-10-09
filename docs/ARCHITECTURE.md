@@ -116,6 +116,15 @@ while doors, the clock, the drawing and windows stay separate. Textured surfaces
 UVs so patterns stay at constant scale. M2/M3 will layer story flags on top: a flag can override
 a prop's placement or a door's state, which is how "Nora hides it → Sam finds it" will work.
 
+## Close-ups (inspectables)
+
+`src/data/inspectables.ts` lists props worth a closer look (by prop `id`), with per-timeline
+text: a name, one short line, and an optional faint hint (hints nudge players toward each other,
+never to an answer). `House` keeps those props as separate meshes with their own materials so
+they can glow when looked at, plus an invisible padded hit box so small things are easy to aim
+at. `Inspector` glides the camera from the player's eyes to a framing in front of (or above) the
+object; the player stays put. `InspectCard` draws the text.
+
 ## Audio
 
 Every sound is **synthesised at runtime** with the Web Audio API (`src/audio/synth.ts`): noise,

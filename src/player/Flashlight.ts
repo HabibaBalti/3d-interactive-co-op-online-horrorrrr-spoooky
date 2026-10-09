@@ -34,7 +34,9 @@ export class Flashlight {
     events.emit('flashlight', { on: this.on });
   }
 
-  update(dt: number, yaw: number, pitch: number): void {
+  /** `dim` 0..1 softens the beam (close-ups would otherwise glare). */
+  update(dt: number, yaw: number, pitch: number, dim = 0): void {
+    this.light.intensity = 34 * (1 - dim * 0.6);
     // Lag: the beam lags behind the change in view direction, then catches up.
     this.lagX += (yaw - this.lastYaw) * 1.6;
     this.lagY += (pitch - this.lastPitch) * 1.6;

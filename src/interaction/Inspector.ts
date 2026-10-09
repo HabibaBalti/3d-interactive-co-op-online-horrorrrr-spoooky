@@ -87,11 +87,11 @@ export class Inspector {
     const dir = new Vector3(f.x, 0, f.z).normalize().applyAxisAngle(this.up, yaw);
     if (top) {
       dir
-        .multiplyScalar(0.45)
+        .multiplyScalar(0.3)
         .add(new Vector3(0, 1, 0))
         .normalize();
     } else {
-      dir.y = 0.12;
+      dir.y = 0.22;
       dir.normalize();
     }
     const side = new Vector3().crossVectors(this.up, dir).normalize();
