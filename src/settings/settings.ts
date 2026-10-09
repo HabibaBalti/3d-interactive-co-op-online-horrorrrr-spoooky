@@ -11,6 +11,8 @@ export interface Settings {
   headBob: boolean;
   /** Master volume, 0..1. */
   volume: number;
+  /** Show the faint hint under close-ups. */
+  hints: boolean;
 }
 
 export interface QualityPreset {
@@ -38,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   invertY: false,
   headBob: true,
   volume: 0.8,
+  hints: true,
 };
 
 export function loadSettings(): Settings {

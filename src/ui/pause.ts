@@ -6,7 +6,7 @@ const CONTROLS: [string, string][] = [
   ['mouse', 'look'],
   ['shift', 'run'],
   ['C', 'crouch'],
-  ['E / click', 'use'],
+  ['E / click', 'use · look closer'],
   ['F', 'flashlight'],
   ['esc', 'pause'],
 ];
@@ -37,6 +37,7 @@ export class PauseMenu {
           <label>mouse <input name="mouseSensitivity" type="range" min="0.2" max="3" step="0.05"></label>
           <label>invert look <input name="invertY" type="checkbox"></label>
           <label>head bob <input name="headBob" type="checkbox"></label>
+          <label>hints <input name="hints" type="checkbox"></label>
           <label>quality
             <select name="quality">
               <option value="low">low</option>
@@ -59,6 +60,7 @@ export class PauseMenu {
         mouseSensitivity: Number(data.get('mouseSensitivity')),
         invertY: data.has('invertY'),
         headBob: data.has('headBob'),
+        hints: data.has('hints'),
         quality: data.get('quality') as Quality,
         postFx: data.has('postFx'),
         photosensitive: data.has('photosensitive'),
@@ -87,6 +89,7 @@ export class PauseMenu {
     field('mouseSensitivity').value = String(this.settings.mouseSensitivity);
     field('invertY').checked = this.settings.invertY;
     field('headBob').checked = this.settings.headBob;
+    field('hints').checked = this.settings.hints;
     (form.elements.namedItem('quality') as HTMLSelectElement).value = this.settings.quality;
     field('postFx').checked = this.settings.postFx;
     field('photosensitive').checked = this.settings.photosensitive;

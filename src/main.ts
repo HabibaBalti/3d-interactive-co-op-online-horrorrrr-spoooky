@@ -4,11 +4,13 @@ import { Soundscape } from './audio/Soundscape';
 import { Engine } from './core/Engine';
 import { Input } from './core/Input';
 import { InteractionSystem } from './interaction/InteractionSystem';
+import { Inspector } from './interaction/Inspector';
 import { ServerProbe } from './net/ServerProbe';
 import { Flashlight } from './player/Flashlight';
 import { PlayerController } from './player/PlayerController';
 import { loadSettings, QUALITY_PRESETS, saveSettings, type Settings } from './settings/settings';
 import { DevHud, Reticle, showTitle } from './ui/hud';
+import { InspectCard } from './ui/inspect';
 import { PauseMenu } from './ui/pause';
 import { House } from './world/house/House';
 import { HOUSE } from './world/house/layout';
@@ -43,6 +45,7 @@ let soundscape: Soundscape | null = null;
 let house!: House;
 let flashlight: Flashlight | null = null;
 const player = new PlayerController(engine.camera, input, null!, () => settings);
+const inspector = new Inspector(engine.camera, input, new InspectCard(app, () => settings.hints));
 
 function buildHouse(): void {
   if (house) {
@@ -53,6 +56,7 @@ function buildHouse(): void {
   house = new House(timeline, HOUSE, interaction, {
     shadows: QUALITY_PRESETS[settings.quality].shadows,
     photosensitive: () => settings.photosensitive,
+    onInspect: (target) => inspector.show(target),
   });
   engine.scene.add(house.root);
   engine.applyPalette(house.palette);
@@ -112,6 +116,7 @@ function chooseCharacter(next: Character): void {
 }
 input.onLockChange((locked) => {
   if (locked) hasLocked = true;
+  else inspector.close();
   pause.show(paused());
 });
 // Browsers only allow sound after the player interacts with the page.
@@ -134,8 +139,15 @@ if (!started) {
 
 // --- Actions ----------------------------------------------------------------------------------
 const active = () => started && !paused();
-input.onKey('KeyE', () => active() && interaction.use());
-input.onClick(() => active() && interaction.use());
+// E or click uses what you're looking at, or steps back out of a close-up.
+const use = () => {
+  if (!active()) return;
+  if (inspector.busy) inspector.close();
+  else interaction.use();
+};
+input.onKey('KeyE', use);
+input.onKey('Space', () => inspector.busy && inspector.close());
+input.onClick(use);
 input.onKey('KeyF', () => active() && flashlight?.toggle());
 if (DEV) {
   // Dev only: look at the other timeline from the same spot.
@@ -148,14 +160,18 @@ if (DEV) {
 // --- Frame loop -------------------------------------------------------------------------------
 engine.onUpdate((dt, time) => {
   const on = active();
-  player.update(dt, on);
+  const looking = inspector.busy;
+  player.update(dt, on && !looking);
+  inspector.update(dt);
+  engine.post.atmosphere.uniforms.uVignette!.value = 1 + inspector.amount * 0.12;
   house.update(dt, time, player.feet.y);
   audio?.update(engine.camera.position.y - 1.5, paused() || !started);
   soundscape?.update();
   flashlight?.update(dt, player.yaw, player.pitch);
   engine.flash = house.flash;
-  reticle.show(on);
-  reticle.setPrompt(on ? interaction.update() : null);
+  reticle.show(on && !looking);
+  if (looking) interaction.release();
+  reticle.setPrompt(on && !looking ? interaction.update() : null);
   const f = player.feet;
   devHud?.update(dt, [
     `${character} · ${timeline}${DEV ? ' · <kbd>T</kbd> swap' : ''}`,
@@ -167,5 +183,7 @@ engine.start();
 if (devHud) {
   new ServerProbe((s) => devHud.setServer(s)).connect();
   // Console/automation handle for debugging (dev builds only).
-  Object.assign(window, { __still: { engine, player, interaction, house: () => house } });
+  Object.assign(window, {
+    __still: { engine, player, interaction, inspector, house: () => house },
+  });
 }

@@ -152,6 +152,15 @@ export const HOUSE: HouseLayout = {
     // Hall
     { kind: 'clock', id: 'clock', pos: [1.25, 0, -2.3], rotY: 270 },
     { kind: 'sideTable', pos: [-1.2, 0, 5.3], rotY: 90 },
+    // Little Sam's walkie-talkie: the voice link between the players.
+    {
+      kind: 'walkie',
+      id: 'walkie',
+      pos: [-1.2, 0.75, 5.05],
+      rotY: 70,
+      collide: false,
+      present: { pos: [-0.85, 0.02, 4.6], rotY: 130, tilt: [-88, 0] },
+    },
     {
       kind: 'tableLamp',
       pos: [-1.2, 0.75, 5.3],
@@ -202,6 +211,15 @@ export const HOUSE: HouseLayout = {
     { kind: 'piano', id: 'piano', pos: [3.2, 0, -5.55], present: { sheet: true } },
     { kind: 'desk', pos: [6.55, 0, -3.0], rotY: 270 },
     { kind: 'tableLamp', pos: [6.6, 0.75, -2.5], collide: false, present: 'missing' },
+    // Nora's music box. Its drum carries the lullaby as coloured marks.
+    {
+      kind: 'musicBox',
+      id: 'music-box',
+      pos: [6.5, 0.75, -3.35],
+      rotY: 270,
+      collide: false,
+      present: 'missing',
+    },
     {
       kind: 'chair',
       pos: [5.95, 0, -3.0],
@@ -237,7 +255,15 @@ export const HOUSE: HouseLayout = {
     { kind: 'kitchenTable', pos: [-3.9, 0, -2.0] },
     { kind: 'chair', pos: [-3.9, 0, -1.2], rotY: 180 },
     { kind: 'chair', pos: [-3.0, 0, -2.0], rotY: 270, present: 'missing' },
-    { kind: 'radio', id: 'radio', pos: [-2.7, 0.9, -5.6], collide: false },
+    { kind: 'radio', id: 'radio', pos: [-2.7, 0.9, -5.6], collide: false, present: 'missing' },
+    // Mum's answering machine, with her last message still on the tape.
+    {
+      kind: 'answeringMachine',
+      id: 'answering-machine',
+      pos: [-2.6, 0.9, -5.6],
+      only: 'present',
+      collide: false,
+    },
     { kind: 'jar', id: 'cookie-jar', pos: [-3.2, 0.9, -5.65], collide: false },
     // Basement
     { kind: 'boiler', pos: [-6.2, -3, -5.2] },

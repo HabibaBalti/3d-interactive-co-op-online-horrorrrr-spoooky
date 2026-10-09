@@ -4,6 +4,7 @@ import type { HouseLayout, Vec3 } from '../world/house/types';
 import type { AudioEngine, Spatial } from './AudioEngine';
 import { hum } from './Hummer';
 import {
+  answeringMessage,
   bolt,
   clockTick,
   creak,
@@ -15,6 +16,7 @@ import {
   noise,
   rattle,
   thunder,
+  walkieStatic,
 } from './synth';
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
@@ -44,6 +46,8 @@ export class Soundscape {
   private tock = false;
   private clock?: Spatial;
   private stepSide = 1;
+  /** One-shot sounds still playing, by object id, so leaning in twice doesn't double them. */
+  private readonly busy = new Map<string, number>();
 
   constructor(
     private readonly audio: AudioEngine,
@@ -354,6 +358,21 @@ export class Soundscape {
               return t + 0.5;
           }
         });
+      }),
+      events.on('inspect', (e) => {
+        if (this.audio.now < (this.busy.get(e.id) ?? 0)) return;
+        this.oneShot(
+          [e.x, e.y, e.z],
+          (out, t) => {
+            const end =
+              e.sound === 'message'
+                ? answeringMessage(this.ctx, out, t + 0.4)
+                : walkieStatic(this.ctx, out, t + 0.3);
+            this.busy.set(e.id, end);
+            return end;
+          },
+          0.8,
+        );
       }),
       events.on('flashlight', () => flashlightClick(this.ctx, this.bus, this.audio.now)),
       events.on('strike', (e) => {

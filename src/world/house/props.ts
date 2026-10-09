@@ -251,6 +251,31 @@ const BUILDERS: Record<Exclude<PropKind, 'clock' | 'drawing'>, (a: Args) => Part
     box('wood', 0.5, 0.4, 0.45, 0.05, 0.45),
     box('wood', 0.45, 0.35, 0.4, 0.55, 0, 0.1),
   ],
+  walkie: () => [
+    box('valveYellow', 0.07, 0.17, 0.04),
+    box('black', 0.05, 0.05, 0.005, 0, 0.1, 0.021, false),
+    box('valveRed', 0.03, 0.015, 0.01, 0, 0.03, 0.021, false),
+    cyl('black', 0.006, 0.16, 0.025, 0.17, 0, 6),
+  ],
+  musicBox: () => [
+    box('woodDark', 0.22, 0.09, 0.15),
+    // Open lid, leaning back.
+    {
+      geometry: new BoxGeometry(0.22, 0.012, 0.15),
+      surface: 'woodDark',
+      matrix: at(0, 0.15, -0.11, -1.2),
+    },
+    {
+      geometry: new CylinderGeometry(0.025, 0.025, 0.14, 12),
+      surface: 'metal',
+      matrix: at(0, 0.1, 0.02, 0, 0, Math.PI / 2),
+    },
+  ],
+  answeringMachine: () => [
+    box('black', 0.26, 0.06, 0.18),
+    box('metal', 0.1, 0.005, 0.07, -0.05, 0.06, 0),
+    cyl('valveRed', 0.008, 0.008, 0.09, 0.06, 0.05, 8),
+  ],
   debris: () => {
     const rand = seeded(77);
     const parts: Part[] = [box('ceiling', 1.0, 0.08, 0.7, 0, 0, 0)];

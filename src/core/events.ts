@@ -10,6 +10,8 @@ export interface GameEvents {
   step: { surface: Surface; intensity: number; x: number; y: number; z: number };
   door: { action: DoorAction; x: number; y: number; z: number };
   flashlight: { on: boolean };
+  /** The player leaned in to look at something that makes a sound. */
+  inspect: { id: string; sound: 'message' | 'static'; x: number; y: number; z: number };
   /** Lightning; `power` 0..1, higher means closer. */
   strike: { power: number };
 }

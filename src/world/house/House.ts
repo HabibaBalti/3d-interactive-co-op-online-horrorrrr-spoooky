@@ -1,5 +1,7 @@
 import {
   AmbientLight,
+  Color,
+  type MeshToonMaterial,
   Box3,
   BoxGeometry,
   type BufferGeometry,
@@ -27,7 +29,8 @@ import {
   disposeMaterialLibrary,
   type MaterialLibrary,
 } from '../../render/materials/library';
-import { toonMaterial } from '../../render/materials/toon';
+import { inkEdges, toonMaterial } from '../../render/materials/toon';
+import { INSPECTABLES, type Inspectable, type InspectText } from '../../data/inspectables';
 import { PALETTES, type TimelinePalette } from '../../render/palettes';
 import { blotchTexture, childDrawingTexture, seeded } from '../../render/textures';
 import { GrandfatherClock } from '../props/GrandfatherClock';
@@ -40,7 +43,21 @@ import { frameBox, splitWall, WALL_THICKNESS, type Box3D, type SplitWall } from 
 export interface HouseOptions {
   shadows: boolean;
   photosensitive: () => boolean;
+  /** The player chose to look closely at something. */
+  onInspect?: (target: InspectTarget) => void;
 }
+
+/** Something the player can lean in and look at. */
+export interface InspectTarget {
+  id: string;
+  object: Object3D;
+  def: Inspectable;
+  text: InspectText;
+  /** Horizontal direction the object faces (where to stand to look at it). */
+  front: Vector3;
+}
+
+const GLOW = new Color('#e8d9b0');
 
 /** Below this feet height the player is in the basement. */
 const BASEMENT_LEVEL = -1.5;
@@ -81,6 +98,11 @@ export class House {
   private readonly storm: Storm | null;
   private clock?: GrandfatherClock;
   private readonly rand: () => number;
+  private readonly inspectables: {
+    mats: MeshToonMaterial[];
+    hovered: boolean;
+    glow: number;
+  }[] = [];
   /** 0..1 lightning flash for the post pass. */
   flash = 0;
 
@@ -297,6 +319,7 @@ export class House {
       this.clock.root.applyMatrix4(matrix);
       this.root.add(this.clock.root);
       this.collideWorldBox(new Box3().setFromObject(this.clock.root));
+      this.makeInspectable(prop, this.clock.root, place);
       return;
     }
     if (prop.kind === 'drawing') {
@@ -307,6 +330,7 @@ export class House {
       drawing.applyMatrix4(matrix);
       if (this.timeline === 'present') drawing.rotateZ(-0.12);
       this.root.add(drawing);
+      this.makeInspectable(prop, drawing, place);
       return;
     }
 
@@ -318,12 +342,55 @@ export class House {
       parts = [sheetOver(local.min.x, local.max.x, local.min.z, local.max.z, local.max.y)];
     }
     const world = new Box3();
+    // Things worth a closer look stay separate meshes (with their own materials) so they can
+    // glow when looked at; everything else is merged into the static batch.
+    const inspectable = prop.id ? INSPECTABLES[prop.id]?.text[this.timeline] : undefined;
+    const group = inspectable ? new Group() : null;
     for (const part of parts) {
       const m = tmpM.multiplyMatrices(matrix, part.matrix);
       world.union(partBounds(part.geometry, m));
-      this.batcher.add(part.geometry, m.clone(), part.surface, part.ink ?? true);
+      if (group) {
+        const mesh = new Mesh(part.geometry, this.materials[part.surface].clone());
+        mesh.applyMatrix4(m);
+        if (part.ink ?? true) inkEdges(mesh, this.palette.ink);
+        group.add(mesh);
+      } else {
+        this.batcher.add(part.geometry, m.clone(), part.surface, part.ink ?? true);
+      }
+    }
+    if (group) {
+      this.root.add(group);
+      this.makeInspectable(prop, group, place);
     }
     if (prop.collide !== false) this.collideWorldBox(world);
+  }
+
+  private makeInspectable(prop: PropSpec, object: Object3D, place: PropPlacement): void {
+    const def = prop.id ? INSPECTABLES[prop.id] : undefined;
+    const text = def?.text[this.timeline];
+    if (!def || !text) return;
+    const mats: MeshToonMaterial[] = [];
+    object.traverse((o) => {
+      const m = (o as Mesh).material;
+      if (m && (m as MeshToonMaterial).isMeshToonMaterial) {
+        const toon = m as MeshToonMaterial;
+        toon.emissive.copy(GLOW);
+        toon.emissiveIntensity = 0;
+        mats.push(toon);
+      }
+    });
+    const entry = { mats, hovered: false, glow: 0 };
+    this.inspectables.push(entry);
+    const front = new Vector3(0, 0, 1).applyAxisAngle(
+      new Vector3(0, 1, 0),
+      ((place.rotY ?? 0) * Math.PI) / 180,
+    );
+    const target: InspectTarget = { id: prop.id!, object, def, text, front };
+    this.interaction.register(object, {
+      prompt: () => 'look',
+      interact: () => this.options.onInspect?.(target),
+      hover: (on) => (entry.hovered = on),
+    });
   }
 
   private collideWorldBox(b: Box3): void {
@@ -393,6 +460,12 @@ export class House {
   }
 
   update(dt: number, time: number, feetY: number): void {
+    // Things you can look at glow softly while you look at them.
+    for (const it of this.inspectables) {
+      const target = it.hovered ? 0.2 + Math.sin(time * 4) * 0.08 : 0;
+      it.glow += (target - it.glow) * (1 - Math.exp(-dt * 10));
+      for (const m of it.mats) m.emissiveIntensity = it.glow;
+    }
     for (const door of this.doors.values()) door.update(dt);
     this.clock?.update(dt, time);
     this.storm?.update(dt);
@@ -430,6 +503,7 @@ export class House {
       if (mesh.geometry) mesh.geometry.dispose();
     });
     disposeMaterialLibrary(this.materials);
+    for (const it of this.inspectables) it.mats.forEach((m) => m.dispose());
     this.glass.dispose();
   }
 }

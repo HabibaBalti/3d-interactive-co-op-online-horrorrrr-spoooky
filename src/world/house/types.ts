@@ -121,7 +121,10 @@ export type PropKind =
   | 'shelf'
   | 'washer'
   | 'boxes'
-  | 'debris';
+  | 'debris'
+  | 'walkie'
+  | 'musicBox'
+  | 'answeringMachine';
 
 export interface PropPlacement {
   pos: Vec3;

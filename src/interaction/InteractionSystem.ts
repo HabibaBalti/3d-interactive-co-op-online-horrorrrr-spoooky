@@ -5,6 +5,8 @@ export interface Interactable {
   /** The word shown under the reticle, or null when it can't be used right now. */
   prompt(): string | null;
   interact(): void;
+  /** Called when the player starts or stops looking at it. */
+  hover?(on: boolean): void;
 }
 
 const CENTRE = new Vector2(0, 0);
@@ -36,7 +38,7 @@ export class InteractionSystem {
   clear(): void {
     this.targets.length = 0;
     this.occluders = [];
-    this.current = null;
+    this.setCurrent(null);
   }
 
   /** Re-picks the target; returns the prompt to show, if any. */
@@ -45,8 +47,20 @@ export class InteractionSystem {
     this.raycaster.setFromCamera(CENTRE, this.camera);
     const hits = this.raycaster.intersectObjects([...this.occluders, ...this.targets], true);
     const first = hits.find((h) => h.object.visible);
-    this.current = (first?.object.userData.interactable as Interactable | undefined) ?? null;
+    this.setCurrent((first?.object.userData.interactable as Interactable | undefined) ?? null);
     return this.current?.prompt() ?? null;
+  }
+
+  private setCurrent(next: Interactable | null): void {
+    if (next === this.current) return;
+    this.current?.hover?.(false);
+    this.current = next;
+    next?.hover?.(true);
+  }
+
+  /** Forget the current target (e.g. while a close-up view is open). */
+  release(): void {
+    this.setCurrent(null);
   }
 
   use(): void {

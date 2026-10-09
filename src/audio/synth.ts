@@ -340,3 +340,127 @@ export function thunder(ctx: BaseAudioContext, out: AudioNode, t: number, power:
     });
   }
 }
+
+/**
+ * A voice heard through a small speaker: a buzzing source shaped by formant filters, cut into
+ * syllables and phrases. Not words, just the shape and tone of someone talking.
+ * Returns the time the voice stops.
+ */
+function murmur(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  t: number,
+  o: { pitch: [number, number]; phrases: number; cutOff?: boolean; peak: number },
+): number {
+  const voice = ctx.createOscillator();
+  voice.type = 'sawtooth';
+  const wow = ctx.createOscillator();
+  wow.frequency.value = 0.6;
+  const wowDepth = ctx.createGain();
+  wowDepth.gain.value = 3;
+  wow.connect(wowDepth).connect(voice.frequency);
+  const f1 = ctx.createBiquadFilter();
+  f1.type = 'bandpass';
+  f1.frequency.value = 800;
+  f1.Q.value = 3;
+  const f2 = ctx.createBiquadFilter();
+  f2.type = 'bandpass';
+  f2.frequency.value = 1700;
+  f2.Q.value = 5;
+  const sum = ctx.createGain();
+  voice.connect(f1).connect(sum);
+  voice.connect(f2).connect(sum);
+  // Telephone band.
+  const lo = ctx.createBiquadFilter();
+  lo.type = 'highpass';
+  lo.frequency.value = 320;
+  const hi = ctx.createBiquadFilter();
+  hi.type = 'lowpass';
+  hi.frequency.value = 2800;
+  const gate = ctx.createGain();
+  gate.gain.value = 0;
+  sum.connect(lo).connect(hi).connect(gate).connect(out);
+
+  let at = t;
+  for (let p = 0; p < o.phrases; p++) {
+    const last = p === o.phrases - 1;
+    const syllables = Math.round(rnd(4, 9));
+    const count = last && o.cutOff ? Math.ceil(syllables / 2) : syllables;
+    for (let s = 0; s < count; s++) {
+      const d = rnd(0.11, 0.24);
+      // Pitch falls toward the end of each phrase: tired, apologetic.
+      const fall = 1 - (s / syllables) * 0.18;
+      voice.frequency.setTargetAtTime(rnd(o.pitch[0], o.pitch[1]) * fall, at, 0.03);
+      f1.frequency.setTargetAtTime(rnd(600, 950), at, 0.03);
+      gate.gain.setTargetAtTime(o.peak * rnd(0.6, 1), at, 0.015);
+      gate.gain.setTargetAtTime(o.peak * 0.15, at + d * 0.75, 0.025);
+      at += d;
+    }
+    if (!(last && o.cutOff)) {
+      gate.gain.setTargetAtTime(0, at, 0.04);
+      at += rnd(0.35, 0.8);
+    }
+  }
+  // An abrupt stop if cut off, a soft one otherwise.
+  if (o.cutOff) gate.gain.setValueAtTime(0, at);
+  else gate.gain.setTargetAtTime(0, at, 0.05);
+  voice.start(t);
+  wow.start(t);
+  voice.stop(at + 0.3);
+  wow.stop(at + 0.3);
+  return at;
+}
+
+/** Mum's last message: the beep, tape hiss, her voice, and the tape cutting off. */
+export function answeringMessage(ctx: BaseAudioContext, out: AudioNode, t: number): number {
+  tone(ctx, out, t, { f0: 1000, peak: 0.12, attack: 0.01, decay: 0.5 });
+  const start = t + 0.8;
+  const end = murmur(ctx, out, start, { pitch: [175, 225], phrases: 5, cutOff: true, peak: 0.5 });
+  // Tape hiss under the whole message.
+  const hiss = ctx.createBufferSource();
+  hiss.buffer = noise(ctx, 'white');
+  hiss.loop = true;
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 3500;
+  band.Q.value = 0.5;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, start - 0.2);
+  g.gain.linearRampToValueAtTime(0.025, start);
+  g.gain.setValueAtTime(0.025, end + 0.9);
+  g.gain.linearRampToValueAtTime(0, end + 1);
+  hiss.connect(band).connect(g).connect(out);
+  hiss.start(start - 0.2);
+  hiss.stop(end + 1.1);
+  // The machine clunks to a stop.
+  noiseShot(ctx, out, end + 1, { type: 'bandpass', freq: 1800, q: 2, peak: 0.4, decay: 0.04 });
+  tone(ctx, out, end + 1, { f0: 120, f1: 70, peak: 0.3, decay: 0.08 });
+  return end + 1.2;
+}
+
+/** A walkie-talkie keying up: squelch, crackling static, the click as it drops. */
+export function walkieStatic(ctx: BaseAudioContext, out: AudioNode, t: number): number {
+  const dur = rnd(1.2, 2);
+  const src = ctx.createBufferSource();
+  src.buffer = noise(ctx, 'white');
+  src.loop = true;
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 1900;
+  band.Q.value = 0.8;
+  const n = 64;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const edge = Math.min(1, i / 3, (n - 1 - i) / 3);
+    curve[i] = edge * (0.12 + Math.random() * 0.18);
+  }
+  const g = ctx.createGain();
+  g.gain.value = 0;
+  g.gain.setValueCurveAtTime(curve, t + 0.05, dur);
+  src.connect(band).connect(g).connect(out);
+  src.start(t, Math.random());
+  src.stop(t + dur + 0.2);
+  noiseShot(ctx, out, t, { type: 'highpass', freq: 3000, peak: 0.25, decay: 0.02 });
+  tone(ctx, out, t + dur + 0.06, { f0: 1300, peak: 0.08, decay: 0.07 });
+  return t + dur + 0.2;
+}
