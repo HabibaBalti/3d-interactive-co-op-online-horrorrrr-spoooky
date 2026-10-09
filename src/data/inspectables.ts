@@ -160,6 +160,16 @@ export const INSPECTABLES: Record<string, Inspectable> = {
       },
     },
   },
+  breadbin: {
+    distance: 0.7,
+    text: {
+      '1994': {
+        name: 'Bread bin',
+        line: 'Stale crusts and crumbs.',
+        lore: 'Mum bakes when she can’t sleep. She hasn’t baked in weeks.',
+      },
+    },
+  },
   plates: {
     view: 'top',
     distance: 2.2,

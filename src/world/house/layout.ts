@@ -180,7 +180,6 @@ export const HOUSE: HouseLayout = {
       id: 'photo-2',
       pos: [-1.42, 1.35, 1.9],
       rotY: 90,
-      args: { w: 0.4, h: 0.3 },
       collide: false,
     },
     { kind: 'frame', id: 'photo-3', pos: [-1.42, 1.65, 2.5], rotY: 90, collide: false },
@@ -189,7 +188,6 @@ export const HOUSE: HouseLayout = {
       id: 'photo-4',
       pos: [-1.42, 1.4, 3.1],
       rotY: 90,
-      args: { w: 0.25, h: 0.3 },
       collide: false,
       present: { tilt: [0, 14] },
     },
@@ -265,6 +263,7 @@ export const HOUSE: HouseLayout = {
       collide: false,
     },
     { kind: 'jar', id: 'cookie-jar', pos: [-3.2, 0.9, -5.65], collide: false },
+    { kind: 'breadbin', id: 'breadbin', pos: [-5.3, 0.9, -5.62], collide: false, only: '1994' },
     // Basement
     { kind: 'boiler', pos: [-6.2, -3, -5.2] },
     { kind: 'pipes', id: 'valves', pos: [-5.25, -3, -5.8], args: { w: 3.2 } },

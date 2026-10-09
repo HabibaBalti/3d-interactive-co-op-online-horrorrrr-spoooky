@@ -159,4 +159,66 @@ export const ECHOES: Echo[] = [
     lines: [],
     duration: 14,
   },
+  // --- Act 2 ---
+  {
+    id: 'the-bolt',
+    timeline: '1994',
+    when: 'photosHung',
+    figures: [
+      {
+        kind: 'child',
+        path: [
+          [0.3, 0, -4.6],
+          [0.05, 0, -4.95],
+        ],
+      },
+    ],
+    lines: [
+      { who: 'child', text: 'Go away. Go away, go away.', pause: 1.2 },
+      { who: 'child', text: 'I’m not scared. I’m not.' },
+    ],
+    duration: 9,
+  },
+  {
+    id: 'three-plates',
+    timeline: 'present',
+    when: 'photosHung',
+    figures: [
+      {
+        kind: 'adult',
+        path: [
+          [-3.6, 0, 2.6],
+          [-3.6, 0, 4.6],
+        ],
+      },
+    ],
+    lines: [{ who: 'ruth', text: 'Three. We set three now.', pause: 2 }],
+    duration: 9,
+  },
+  {
+    id: 'not-a-word',
+    timeline: 'present',
+    when: 'tapeWatched',
+    figures: [
+      {
+        kind: 'tall',
+        path: [
+          [-4.6, 0, -3.8],
+          [-4.4, 0, -4.2],
+        ],
+      },
+      {
+        kind: 'adult',
+        path: [
+          [-3.2, 0, -3.0],
+          [-3.4, 0, -3.4],
+        ],
+      },
+    ],
+    lines: [
+      { who: 'ruth', text: 'Not a word. Not to anyone. Not to him.', pause: 1 },
+      { who: 'walter', text: 'He’s nine, Ruth. He won’t remember.' },
+    ],
+    duration: 11,
+  },
 ];

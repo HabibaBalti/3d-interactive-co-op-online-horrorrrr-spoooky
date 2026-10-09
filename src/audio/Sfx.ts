@@ -15,7 +15,11 @@ export type SfxName =
   | 'thud'
   | 'creak'
   | 'rattle'
-  | 'static';
+  | 'static'
+  | 'tape'
+  | 'breath'
+  | 'entityStep'
+  | 'drip';
 
 /** Puzzle and story sounds, optionally placed in the house. */
 export class Sfx {
@@ -68,6 +72,19 @@ export class Sfx {
         break;
       case 'static':
         end = synth.walkieStatic(a.ctx, out, t);
+        break;
+      case 'tape':
+        end = synth.tapeWhispers(a.ctx, out, t);
+        break;
+      case 'breath':
+        end = synth.breath(a.ctx, out, t);
+        break;
+      case 'entityStep':
+        synth.heavyStep(a.ctx, out, t, 0.5);
+        synth.drip(a.ctx, out, t + 0.1, 0.15);
+        break;
+      case 'drip':
+        synth.drip(a.ctx, out, t, 0.25);
         break;
     }
     if (s) window.setTimeout(() => s.dispose(), (end - a.now + 2) * 1000);

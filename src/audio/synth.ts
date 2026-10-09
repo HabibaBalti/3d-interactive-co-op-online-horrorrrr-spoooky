@@ -618,3 +618,35 @@ export function surge(ctx: BaseAudioContext, out: AudioNode, t: number): void {
     decay: 1.2,
   });
 }
+
+/** Two people whispering on a home video: a low voice and a higher one, taking turns. */
+export function tapeWhispers(ctx: BaseAudioContext, out: AudioNode, t: number): number {
+  const a = murmur(ctx, out, t + 0.5, { pitch: [95, 125], phrases: 2, peak: 0.35 });
+  return murmur(ctx, out, a + 0.4, { pitch: [175, 215], phrases: 2, cutOff: true, peak: 0.3 });
+}
+
+/** Something breathing, wet and slow, close behind you. */
+export function breath(ctx: BaseAudioContext, out: AudioNode, t: number): number {
+  for (let i = 0; i < 3; i++) {
+    const at = t + i * 2.1;
+    noiseShot(ctx, out, at, {
+      type: 'bandpass',
+      freq: 600,
+      q: 0.8,
+      peak: 0.25,
+      attack: 0.6,
+      decay: 0.7,
+      color: 'pink',
+    });
+    noiseShot(ctx, out, at + 1.1, {
+      type: 'bandpass',
+      freq: 420,
+      q: 0.8,
+      peak: 0.18,
+      attack: 0.3,
+      decay: 0.6,
+      color: 'pink',
+    });
+  }
+  return t + 6.5;
+}

@@ -130,12 +130,37 @@ export class Door implements Interactable {
     this.boltBar.position[this.boltAxis] = this.boltRest + (this.bolted ? this.boltSlide : 0);
   }
 
+  /** Story overrides: the house can lock, unlock or bolt a door by itself. */
+  forceLocked: boolean | null = null;
+
   get locked(): boolean {
-    return !!this.spec.locked || this.bolted;
+    return (this.forceLocked ?? !!this.spec.locked) || this.bolted;
   }
 
+  get isOpen(): boolean {
+    return this.target > 0;
+  }
+
+  setOpen(open: boolean): void {
+    if (open === this.target > 0) return;
+    this.target = open ? OPEN_ANGLE : 0;
+    if (open) this.sound('open');
+  }
+
+  /** Slide the bolt without anyone touching it. */
+  setBolted(bolted: boolean): void {
+    if (this.bolted === bolted) return;
+    this.bolted = bolted;
+    this.placeBolt();
+    this.sound(bolted ? 'bolt' : 'unbolt');
+  }
+
+  /** Hook for puzzles: a locked door with a key in hand says "unlock". */
+  onLockedUse: (() => boolean) | null = null;
+  lockedPrompt: (() => string | null) | null = null;
+
   prompt(): string {
-    if (this.spec.locked) return 'locked';
+    if (this.forceLocked ?? this.spec.locked) return this.lockedPrompt?.() ?? 'locked';
     if (this.bolted && this.target === 0) return 'stuck';
     return this.target > 0 ? 'close' : 'open';
   }
@@ -145,6 +170,7 @@ export class Door implements Interactable {
   }
 
   interact(): void {
+    if ((this.forceLocked ?? this.spec.locked) && this.target === 0 && this.onLockedUse?.()) return;
     if (this.locked && this.target === 0) {
       this.rattle = 0.4;
       this.sound('rattle');

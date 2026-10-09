@@ -120,6 +120,8 @@ export class House {
     hovered: boolean;
     glow: number;
   }[] = [];
+  /** Mains power, 0..1: the hunt and the climax take the lights down. */
+  power = 1;
   /** 0..1 lightning flash for the post pass. */
   flash = 0;
 
@@ -555,7 +557,7 @@ export class House {
           0.4 * Math.abs(Math.sin(cut * 12.9898)) +
           Math.sin(time * 23) * (calm ? 0.01 : 0.06);
       }
-      light.intensity = spec.intensity * k;
+      light.intensity = spec.intensity * k * this.power;
     }
 
     const flash = this.storm?.flash ?? 0;

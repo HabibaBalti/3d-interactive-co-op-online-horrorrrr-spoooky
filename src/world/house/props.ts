@@ -106,7 +106,7 @@ const BUILDERS: Record<Exclude<PropKind, 'clock' | 'drawing'>, (a: Args) => Part
   ],
   frame: (a) => {
     const w = a.w ?? 0.3;
-    const h = a.h ?? 0.4;
+    const h = a.h ?? 0.36;
     return [
       box('woodDark', w, h, 0.03, 0, -h / 2),
       box('photo', w - 0.06, h - 0.06, 0.005, 0, -h / 2 + 0.03, 0.016, false),
@@ -291,6 +291,7 @@ const BUILDERS: Record<Exclude<PropKind, 'clock' | 'drawing'>, (a: Args) => Part
     box('metal', 0.1, 0.005, 0.07, -0.05, 0.06, 0),
     cyl('valveRed', 0.008, 0.008, 0.09, 0.06, 0.05, 8),
   ],
+  breadbin: () => [box('wood', 0.34, 0.18, 0.24), box('woodDark', 0.34, 0.03, 0.26, 0, 0.18, 0.01)],
   debris: () => {
     const rand = seeded(77);
     const parts: Part[] = [box('ceiling', 1.0, 0.08, 0.7, 0, 0, 0)];

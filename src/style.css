@@ -872,3 +872,28 @@ body {
 .progress span.on {
   background: var(--paper);
 }
+
+.photos {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.photo {
+  padding: 0;
+  border: 3px solid #3a2414;
+  background: #3a2414;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.photo img {
+  width: clamp(70px, 14vw, 110px);
+  height: auto;
+}
+
+.photo.picked {
+  border-color: var(--blood);
+  transform: translateY(-6px);
+}

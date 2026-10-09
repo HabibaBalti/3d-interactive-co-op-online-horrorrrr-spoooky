@@ -53,10 +53,14 @@ export class Input {
     result?.catch?.(() => {});
   }
 
-  onKey(code: string, fn: () => void): void {
+  onKey(code: string, fn: () => void): () => void {
     const list = this.keyHandlers.get(code) ?? [];
     list.push(fn);
     this.keyHandlers.set(code, list);
+    return () => {
+      const i = list.indexOf(fn);
+      if (i >= 0) list.splice(i, 1);
+    };
   }
 
   /** Left click while the pointer is locked. */
