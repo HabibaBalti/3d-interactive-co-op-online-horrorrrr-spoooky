@@ -1,3 +1,5 @@
+import { events } from '../core/events';
+
 /**
  * The 1994 storm: irregular double-strike lightning. Produces a 0..1 flash level that drives
  * the window glass, the light through the windows and the post-processing flash.
@@ -17,6 +19,7 @@ export class Storm {
     if (this.nextStrike <= 0) {
       this.strike = 0;
       this.nextStrike = 9 + Math.random() * 16;
+      events.emit('strike', { power: 0.3 + Math.random() * 0.7 });
     }
     let f = 0;
     if (this.strike >= 0) {

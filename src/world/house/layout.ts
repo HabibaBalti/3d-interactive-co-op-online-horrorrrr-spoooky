@@ -296,4 +296,14 @@ export const HOUSE: HouseLayout = {
     nora: { pos: [-0.5, 0, 5.2], yaw: 0 },
     sam: { pos: [-0.5, 0, 5.2], yaw: 0 },
   },
+
+  sounds: {
+    upstairs: [
+      [-4, 3.6, -3],
+      [4, 3.6, 3],
+    ],
+    // 1994: Ruth humming upstairs. Present: the same song, from the basement.
+    hum: { '1994': [2, 3.8, -2], present: [-2.5, -2.2, -2] },
+    bounds: [-6.5, -5.5, 6.5, 5.5],
+  },
 };

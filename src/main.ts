@@ -1,4 +1,6 @@
 import './style.css';
+import { AudioEngine } from './audio/AudioEngine';
+import { Soundscape } from './audio/Soundscape';
 import { Engine } from './core/Engine';
 import { Input } from './core/Input';
 import { InteractionSystem } from './interaction/InteractionSystem';
@@ -28,6 +30,16 @@ const interaction = new InteractionSystem(engine.camera);
 const reticle = new Reticle(app);
 const devHud = DEV ? new DevHud(app) : null;
 
+// Sound is optional: if the browser refuses an AudioContext, the game runs silent.
+let audio: AudioEngine | null = null;
+try {
+  audio = new AudioEngine(engine.camera);
+  audio.setVolume(settings.volume);
+} catch {
+  audio = null;
+}
+let soundscape: Soundscape | null = null;
+
 let house!: House;
 let flashlight: Flashlight | null = null;
 const player = new PlayerController(engine.camera, input, null!, () => settings);
@@ -46,6 +58,12 @@ function buildHouse(): void {
   engine.applyPalette(house.palette);
   interaction.setOccluders(house.occluders);
   player.setCollision(house.collision);
+
+  soundscape?.dispose();
+  if (audio) {
+    audio.setTimeline(timeline);
+    soundscape = new Soundscape(audio, timeline, HOUSE);
+  }
 
   // Only Sam, in the dark present, carries a flashlight.
   flashlight?.dispose();
@@ -67,6 +85,7 @@ function updateSettings(next: Partial<Settings>): void {
   settings = { ...settings, ...next };
   saveSettings(settings);
   engine.applySettings(settings);
+  audio?.setVolume(settings.volume);
   const shadows = QUALITY_PRESETS[settings.quality].shadows;
   if (shadows !== shadowsBefore) {
     house.setShadows(shadows);
@@ -95,12 +114,19 @@ input.onLockChange((locked) => {
   if (locked) hasLocked = true;
   pause.show(paused());
 });
+// Browsers only allow sound after the player interacts with the page.
+window.addEventListener('pointerdown', () => audio?.resume());
+window.addEventListener('keydown', () => started && audio?.resume());
+document.addEventListener('visibilitychange', () =>
+  document.hidden ? audio?.suspend() : started && audio?.resume(),
+);
 engine.renderer.domElement.addEventListener('click', () => {
   if (started && !input.locked) input.requestLock();
 });
 if (!started) {
   showTitle(app, (choice) => {
     chooseCharacter(choice);
+    audio?.resume();
     started = true;
     input.requestLock();
   });
@@ -124,6 +150,8 @@ engine.onUpdate((dt, time) => {
   const on = active();
   player.update(dt, on);
   house.update(dt, time, player.feet.y);
+  audio?.update(engine.camera.position.y - 1.5, paused() || !started);
+  soundscape?.update();
   flashlight?.update(dt, player.yaw, player.pitch);
   engine.flash = house.flash;
   reticle.show(on);

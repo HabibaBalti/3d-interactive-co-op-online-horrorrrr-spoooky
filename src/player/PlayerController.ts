@@ -1,4 +1,5 @@
 import { type PerspectiveCamera, Vector3 } from 'three';
+import { events } from '../core/events';
 import type { Input } from '../core/Input';
 import type { CollisionWorld } from '../physics/CollisionWorld';
 import type { Settings } from '../settings/settings';
@@ -33,6 +34,8 @@ export class PlayerController {
   private bobAmount = 0;
   /** Horizontal speed this frame, m/s (the entity will listen to this in M5). */
   speed = 0;
+  private surface: 'floor' | 'tile' | 'concrete' = 'floor';
+  private lastStep = 0;
 
   constructor(
     private readonly camera: PerspectiveCamera,
@@ -108,6 +111,7 @@ export class PlayerController {
       this.vy = 0;
       this.grounded = true;
       this.room = ground.zone.room;
+      this.surface = ground.zone.surface ?? 'floor';
     } else {
       this.grounded = false;
       this.vy -= GRAVITY * dt;
@@ -127,6 +131,18 @@ export class PlayerController {
     const moving = this.grounded && this.speed > 0.2;
     this.bobAmount += ((moving && s.headBob ? 1 : 0) - this.bobAmount) * (1 - Math.exp(-dt * 6));
     this.bobPhase += dt * (running ? 10.5 : this.crouched ? 5 : 7.5) * (moving ? 1 : 0);
+    // A footstep every half bob cycle.
+    const step = Math.floor(this.bobPhase / Math.PI);
+    if (step !== this.lastStep && moving) {
+      events.emit('step', {
+        surface: this.surface,
+        intensity: this.crouched ? 0.2 : running ? 1 : 0.55,
+        x: this.feet.x,
+        y: this.feet.y,
+        z: this.feet.z,
+      });
+    }
+    this.lastStep = step;
     const bobY = Math.sin(this.bobPhase * 2) * 0.022 * this.bobAmount;
     const bobX = Math.cos(this.bobPhase) * 0.012 * this.bobAmount;
 

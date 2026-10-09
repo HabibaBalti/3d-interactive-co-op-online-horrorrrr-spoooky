@@ -1,3 +1,4 @@
+import { events } from '../core/events';
 import { type Object3D, type PerspectiveCamera, SpotLight } from 'three';
 
 /**
@@ -30,6 +31,7 @@ export class Flashlight {
   toggle(): void {
     this.on = !this.on;
     this.light.visible = this.on;
+    events.emit('flashlight', { on: this.on });
   }
 
   update(dt: number, yaw: number, pitch: number): void {

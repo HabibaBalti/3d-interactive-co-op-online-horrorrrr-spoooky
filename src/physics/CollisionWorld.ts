@@ -26,6 +26,8 @@ export interface FloorZone {
   /** Height at the max edge of `axis`. */
   y1: number;
   axis: 'x' | 'z';
+  /** What it sounds like underfoot. */
+  surface?: 'floor' | 'tile' | 'concrete';
 }
 
 export interface Ground {

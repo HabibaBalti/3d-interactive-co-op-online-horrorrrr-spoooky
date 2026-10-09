@@ -43,6 +43,8 @@ ambiguous or impractical.
   Static geometry must go through `StaticBatcher`; only animated/interactive things are separate
   meshes.
 - Interaction prompts are single lowercase words (`open`, `locked`, `unbolt`).
+- Sound: gameplay code never plays audio directly. It emits on `core/events.ts`; the
+  `Soundscape` reacts. New effects are synthesised in `src/audio/synth.ts`.
 - Greybox = primitives + procedural canvas textures (`src/render/textures.ts`). Real assets go in
   `public/assets/` as glTF/GLB (models), OGG (audio), and are lazy-loaded per act.
 - Wrap `localStorage`/`sessionStorage` access in try/catch.

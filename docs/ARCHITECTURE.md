@@ -72,6 +72,7 @@ Folders marked _(M#)_ don't exist yet; they are created by the milestone that ne
 │   │   ├── house/             # layout.ts (THE HOUSE AS DATA), House builder, Door, props, walls
 │   │   ├── props/             # Hand-built dynamic props (grandfather clock)
 │   │   └── Storm.ts           # 1994 lightning
+│   ├── audio/                 # AudioEngine (mix, reverb, 3D), Soundscape, synth, Hummer
 │   ├── player/                # First-person controller, Sam's flashlight
 │   ├── interaction/           # Look-at + E/click interactables (one-word prompts)
 │   ├── net/                   # Server connection; (M2) room client, flag sync
@@ -79,7 +80,6 @@ Folders marked _(M#)_ don't exist yet; they are created by the milestone that ne
 │   ├── puzzles/               # (M3+) one module per puzzle: clock/, floorboards/, lullaby/, …
 │   ├── echoes/                # (M3) memory echo playback
 │   ├── entity/                # The entity: figure (M0), AI + hunts (M5)
-│   ├── audio/                 # (M4) spatial audio, voice line registry, subtitles
 │   ├── data/                  # (M3+) data-driven content: puzzles, wrongness events, voice lines
 │   └── ui/                    # HUD, title, (M2) landing/lobby, (M7) settings menu
 ├── GAME_DESIGN.md             # Creative brief (source of truth)
@@ -115,6 +115,24 @@ Folders marked _(M#)_ don't exist yet; they are created by the milestone that ne
 while doors, the clock, the drawing and windows stay separate. Textured surfaces get world-space
 UVs so patterns stay at constant scale. M2/M3 will layer story flags on top: a flag can override
 a prop's placement or a door's state, which is how "Nora hides it → Sam finds it" will work.
+
+## Audio
+
+Every sound is **synthesised at runtime** with the Web Audio API (`src/audio/synth.ts`): noise,
+oscillators and filters, no audio files. That keeps the download tiny, avoids licensing, and lets
+sounds vary each time. Recorded voice lines (memory echoes, tapes) will be files later; the
+pipeline is the same.
+
+- `AudioEngine`: one AudioContext; the listener rides the camera; everything goes through a dry
+  path plus a convolution reverb whose room changes with timeline (the empty present rings) and
+  floor (the basement is bigger and wetter). Master volume, pause ducking, suspend when hidden.
+- `Soundscape`: built per timeline like the house. Beds (rain or wind, room tone), positioned
+  loops (clock, TV, boiler), timed events (creaks, steps overhead, humming, drips), and reactions
+  to game events. Sources on another floor are muffled with a lowpass (cheap occlusion).
+- `core/events.ts`: gameplay emits `step`, `door`, `flashlight`, `strike`; the soundscape listens.
+  The entity's hearing (M5) will subscribe to the same events.
+- The lullaby (`src/data/lullaby.ts`) is data, shared by the humming now and the music-box and
+  piano puzzle later.
 
 ## Rendering pipeline
 

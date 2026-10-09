@@ -9,6 +9,8 @@ export interface Settings {
   mouseSensitivity: number;
   invertY: boolean;
   headBob: boolean;
+  /** Master volume, 0..1. */
+  volume: number;
 }
 
 export interface QualityPreset {
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   mouseSensitivity: 1,
   invertY: false,
   headBob: true,
+  volume: 0.8,
 };
 
 export function loadSettings(): Settings {

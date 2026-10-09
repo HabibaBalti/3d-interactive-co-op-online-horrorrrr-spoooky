@@ -227,6 +227,7 @@ export class House {
         y0: fl.y,
         y1: fl.y,
         axis: 'z',
+        surface: fl.surface === 'tile' || fl.surface === 'concrete' ? fl.surface : 'floor',
       });
     }
     for (const c of this.layout.ceilings) {

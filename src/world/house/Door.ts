@@ -1,5 +1,6 @@
 import { BoxGeometry, type Color, Group, type Material, Mesh, SphereGeometry } from 'three';
 import type { Timeline } from '../../../shared/types';
+import { events, type DoorAction } from '../../core/events';
 import type { AABB, CollisionWorld } from '../../physics/CollisionWorld';
 import { inkEdges } from '../../render/materials/toon';
 import type { Interactable, InteractionSystem } from '../../interaction/InteractionSystem';
@@ -25,6 +26,7 @@ export class Door implements Interactable {
   private angle: number;
   private target: number;
   private rattle = 0;
+  private readonly centre: { x: number; y: number; z: number };
   bolted: boolean;
 
   constructor(
@@ -38,6 +40,12 @@ export class Door implements Interactable {
     interaction: InteractionSystem,
   ) {
     const width = opening.a1 - opening.a0;
+    const mid = (opening.a0 + opening.a1) / 2;
+    this.centre = {
+      x: frame.axis === 'x' ? mid : frame.c,
+      y: opening.y0 + 1.2,
+      z: frame.axis === 'x' ? frame.c : mid,
+    };
     const height = opening.y1 - opening.y0;
     this.angle = this.target = spec.open?.[timeline] ?? 0;
     this.bolted = spec.bolt?.bolted[timeline] ?? false;
@@ -107,6 +115,7 @@ export class Door implements Interactable {
         interact: () => {
           this.bolted = !this.bolted;
           this.placeBolt();
+          this.sound(this.bolted ? 'bolt' : 'unbolt');
         },
       });
       this.placeBolt();
@@ -131,12 +140,18 @@ export class Door implements Interactable {
     return this.target > 0 ? 'close' : 'open';
   }
 
+  private sound(action: DoorAction): void {
+    events.emit('door', { action, ...this.centre });
+  }
+
   interact(): void {
     if (this.locked && this.target === 0) {
       this.rattle = 0.4;
+      this.sound('rattle');
       return;
     }
     this.target = this.target > 0 ? 0 : OPEN_ANGLE;
+    if (this.target > 0) this.sound('open');
   }
 
   private apply(): void {
@@ -148,7 +163,9 @@ export class Door implements Interactable {
   }
 
   update(dt: number): void {
+    const before = this.angle;
     this.angle += (this.target - this.angle) * (1 - Math.exp(-dt * 6));
+    if (this.target === 0 && before >= 0.04 && this.angle < 0.04) this.sound('close');
     if (Math.abs(this.target - this.angle) < 0.001) this.angle = this.target;
     this.rattle = Math.max(0, this.rattle - dt);
     this.apply();

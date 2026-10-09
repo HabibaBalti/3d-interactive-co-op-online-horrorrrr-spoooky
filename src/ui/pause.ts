@@ -33,6 +33,7 @@ export class PauseMenu {
         <h2>paused</h2>
         <div class="controls"></div>
         <form class="settings">
+          <label>volume <input name="volume" type="range" min="0" max="1" step="0.05"></label>
           <label>mouse <input name="mouseSensitivity" type="range" min="0.2" max="3" step="0.05"></label>
           <label>invert look <input name="invertY" type="checkbox"></label>
           <label>head bob <input name="headBob" type="checkbox"></label>
@@ -54,6 +55,7 @@ export class PauseMenu {
     form.addEventListener('input', () => {
       const data = new FormData(form);
       const next: Partial<Settings> = {
+        volume: Number(data.get('volume')),
         mouseSensitivity: Number(data.get('mouseSensitivity')),
         invertY: data.has('invertY'),
         headBob: data.has('headBob'),
@@ -81,6 +83,7 @@ export class PauseMenu {
   private sync(): void {
     const form = this.el.querySelector('form')!;
     const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement;
+    field('volume').value = String(this.settings.volume);
     field('mouseSensitivity').value = String(this.settings.mouseSensitivity);
     field('invertY').checked = this.settings.invertY;
     field('headBob').checked = this.settings.headBob;

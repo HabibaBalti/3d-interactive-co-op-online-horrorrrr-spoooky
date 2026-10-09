@@ -168,6 +168,16 @@ export interface Spawn {
   yaw: number;
 }
 
+/** Where off-screen sounds come from. */
+export interface SoundSpots {
+  /** Footsteps overhead walk between these two points (upstairs is not built yet). */
+  upstairs: [Vec3, Vec3];
+  /** Where the humming comes from in each timeline. */
+  hum: Record<Timeline, Vec3>;
+  /** House interior bounds for random creaks: [minX, minZ, maxX, maxZ]. */
+  bounds: Rect;
+}
+
 export interface HouseLayout {
   walls: WallSpec[];
   floors: FloorSpec[];
@@ -177,4 +187,5 @@ export interface HouseLayout {
   lights: LightSpec[];
   puddles: PuddleSpec[];
   spawns: Record<Character, Spawn>;
+  sounds: SoundSpots;
 }

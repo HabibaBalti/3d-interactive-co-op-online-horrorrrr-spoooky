@@ -62,6 +62,11 @@ console.
   furniture, chairs knocked over, the plates gone, water on the floor, boarded windows, the clock
   stopped at 3:17. The basement door is **bolted from the hall side**: aim at the bolt beside the
   door (chest height) to slide it, then open the door.
+- **Sound (wear headphones):** everything is placed in 3D. Nora hears rain, thunder after the
+  lightning, the clock ticking, the TV murmuring, the boiler, her father pacing upstairs and her
+  mother humming. Sam hears wind through the boards, dripping water, footsteps upstairs where
+  nobody is, the dead clock ticking once, and, eventually, the same lullaby from the basement,
+  slowed down. Footsteps change on wood, tile, concrete and water. Volume is in the pause menu.
 - The stairs up are behind a locked door (upstairs comes later). The front door is locked.
 
 ### Two players on one machine
