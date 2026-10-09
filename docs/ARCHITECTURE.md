@@ -42,50 +42,47 @@ outgrow one Node box, the same reducer runs inside a Durable Object.
 
 ## Folder structure
 
-Folders marked _(M#)_ don't exist yet; they are created by the milestone that needs them.
-
 ```
 .
-├── index.html                 # Vite entry
-├── public/
-│   ├── favicon.svg
-│   └── assets/                # Static, lazy-loaded per act (see docs/ASSETS.md in M7)
-│       ├── models/            # .glb (Blender exports / CC0 packs)
-│       ├── audio/             # .ogg (+ .mp3 fallback for Safari if needed)
-│       └── textures/
 ├── shared/                    # Pure TS imported by BOTH client and server. No DOM, no Node.
 │   ├── types.ts               # Character, Timeline
 │   ├── protocol.ts            # Wire messages + encode/decode
 │   ├── roomCode.ts            # Spoken-friendly room codes
-│   ├── room.ts                # (M2) authoritative room reducer
-│   └── story/                 # (M2–M3) flag definitions shared by both sides
-├── server/
-│   └── index.ts               # http (health + static dist/) + WebSocket transport
+│   └── game/                  # THE RULES: state, actions, seeded secrets, reducer, board, GameHost
+├── server/                    # http (health + static dist/) + WebSocket rooms around GameHost
 ├── src/
-│   ├── main.ts                # Bootstrap
-│   ├── style.css
-│   ├── core/                  # Engine (renderer, loop), Input (keys, pointer lock)
-│   ├── render/                # PostFX, palettes, textures, StaticBatcher, materials/, shaders/
+│   ├── main.ts                # Bootstrap, title/lobby flow, pause menu, keys
+│   ├── core/                  # Engine (renderer, loop), Input, events bus
+│   ├── render/                # PostFX, palettes, textures, art (photos, portraits, tape frames)
 │   ├── settings/              # Settings + quality presets (persisted)
 │   ├── physics/               # CollisionWorld: wall/prop boxes + floor zones and stair ramps
-│   ├── world/
-│   │   ├── house/             # layout.ts (THE HOUSE AS DATA), House builder, Door, props, walls
-│   │   ├── props/             # Hand-built dynamic props (grandfather clock)
-│   │   └── Storm.ts           # 1994 lightning
-│   ├── audio/                 # AudioEngine (mix, reverb, 3D), Soundscape, synth, Hummer
+│   ├── world/                 # house/ (layout.ts = THE HOUSE AS DATA), Door, clock, Mirror, Storm
+│   ├── audio/                 # AudioEngine, Soundscape, Sfx, synth (all sound made in code)
 │   ├── player/                # First-person controller, Sam's flashlight
-│   ├── interaction/           # Look-at + E/click interactables (one-word prompts)
-│   ├── net/                   # Server connection; (M2) room client, flag sync
-│   ├── story/                 # (M2) flag store, act/loop state, (M4) wrongness system
-│   ├── puzzles/               # (M3+) one module per puzzle: clock/, floorboards/, lullaby/, …
-│   ├── echoes/                # (M3) memory echo playback
-│   ├── entity/                # The entity: figure (M0), AI + hunts (M5)
-│   ├── data/                  # (M3+) data-driven content: puzzles, wrongness events, voice lines
-│   └── ui/                    # HUD, title, (M2) landing/lobby, (M7) settings menu
+│   ├── interaction/           # Look-at + use, close-up Inspector
+│   ├── net/                   # Link: SoloLink (practice), ServerLink (ws), RoomLink (hosted page)
+│   ├── game/                  # Game (one per session), modules: puzzles/, Echoes, Radio,
+│   │                          # Wrongness, Ending, Hud, Voice (speech + subtitles), Scare
+│   ├── entity/                # The entity figure
+│   ├── data/                  # Content as data: echoes, inspectable lines, wrongness, lullaby
+│   └── ui/                    # Lobby, pause menu, close-up panel, reticle
 ├── GAME_DESIGN.md             # Creative brief (source of truth)
 ├── CLAUDE.md                  # Conventions for AI-assisted sessions
-└── docs/ARCHITECTURE.md       # This file
+└── docs/                      # This file, WALKTHROUGH.md (solutions), screenshots
 ```
+
+### Game modules
+
+`Game` builds the player's own timeline and a list of modules (`src/game/modules.ts`). Each
+module gets a `GameContext` (house, player, link, audio, HUD, …) and implements any of
+`onState(state, prev)`, `onFx(fx)`, `update(dt, time)`, `dispose()`. Puzzles never change shared
+state themselves: they call `ctx.act(action)`, and react to the state that comes back. When the
+loop count or seed changes, the whole world is rebuilt (worse lamps, more wrongness).
+
+Three `Link`s carry actions to the rules (`shared/game/reducer.ts`): `SoloLink` runs them in the
+page (practice), `ServerLink` talks to `server/`, and `RoomLink` uses the hosted page's room (the
+creator's page hosts the reducer; topics `hello`, `act`, `state`, `fx`; positions travel as
+presence for the mirror and the partner light).
 
 ### Key boundaries
 
